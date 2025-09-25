@@ -1,0 +1,324 @@
+name: Build
+
+permissions:
+  contents: read
+  pull-requests: write
+
+on:
+  workflow_dispatch
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  detect-changes:
+    name: Detect File Changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      dll-source: ${{ steps.filter.outputs.dll-source }}
+      build-scripts: ${{ steps.filter.outputs.build-scripts }}
+      workflow: ${{ steps.filter.outputs.workflow }}
+      dependencies: ${{ steps.filter.outputs.dependencies }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Filter Changed Paths
+        uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          token: ''
+          filters: |
+            dll-source:
+              - 'CvGameCoreDLL_Expansion2/**'
+              - 'CvGameCoreDLLUtil/**'
+              - 'CvGameDatabase/**'
+              - 'CvLocalization/**'
+              - 'CvWorldBuilderMap/**'
+              - 'FirePlace/**'
+              - 'ThirdPartyLibs/**'
+              - '*.cpp'
+              - '*.h'
+            build-scripts:
+              - 'build_vp_clang*.py'
+              - 'update_commit_id.bat'
+            workflow:
+              - '.github/workflows/**'
+            dependencies:
+              - '*.sln'
+              - '*.vcxproj'
+
+      - name: Changes Summary
+        run: |
+          echo "### 🔍 File Changes Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- DLL Source: ${{ steps.filter.outputs.dll-source == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Build Scripts: ${{ steps.filter.outputs.build-scripts == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Workflow: ${{ steps.filter.outputs.workflow == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Dependencies: ${{ steps.filter.outputs.dependencies == 'true' && '✅' || '❌' }}" >> $GITHUB_STEP_SUMMARY
+
+  setup:
+    needs: detect-changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.dll-source == 'true' || needs.detect-changes.outputs.build-scripts == 'true' || needs.detect-changes.outputs.workflow == 'true' || needs.detect-changes.outputs.dependencies == 'true' }}
+    runs-on: windows-2022
+    steps:
+
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: |
+            ./wget
+            ./SDK7
+            ./SDK7.1
+          key: ${{ runner.os }}-sdks-wget-1.21.3-sdk7.0sp1-sdk7.1-v1
+          restore-keys: |
+            ${{ runner.os }}-sdks-wget-1.21.3-sdk7.0sp1-sdk7.1-
+            ${{ runner.os }}-sdks-
+
+      - name: Install wget
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "Installing wget..."
+          mkdir wget
+          Invoke-WebRequest -Uri https://eternallybored.org/misc/wget/1.21.3/64/wget.exe -OutFile "wget\wget.exe"
+          Add-Content $env:GITHUB_PATH "$env:GITHUB_WORKSPACE\wget"
+          echo "wget installation complete."
+
+      - name: Download Windows SDK 7.0 SP1 and 7.1
+        if: steps.cache.outputs.cache-hit != 'true'
+        run: |
+          echo "Downloading SDKs..."
+          wget -O ./sdk7.iso https://web.archive.org/web/20161230154527/http://download.microsoft.com/download/2/E/9/2E911956-F90F-4BFB-8231-E292A7B6F287/GRMSDK_EN_DVD.iso
+          wget -O ./sdk71.iso http://download.microsoft.com/download/F/1/0/F10113F5-B750-4969-A255-274341AC6BCE/GRMSDK_EN_DVD.iso
+          7z x ./sdk7.iso -y -o"./SDK7"
+          7z x ./sdk71.iso -y -o"./SDK7.1"
+          echo "SDKs downloaded and extracted."
+
+  build-clang:
+    needs: [detect-changes, setup]
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.detect-changes.outputs.dll-source == 'true' || needs.detect-changes.outputs.build-scripts == 'true' || needs.detect-changes.outputs.workflow == 'true' || needs.detect-changes.outputs.dependencies == 'true' }}
+    runs-on: windows-2022
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - uses: actions/cache@v4
+        id: cache
+        with:
+          path: |
+            ./wget
+            ./SDK7
+            ./SDK7.1
+          key: ${{ runner.os }}-sdks-wget-1.21.3-sdk7.0sp1-sdk7.1-v1
+          restore-keys: |
+            ${{ runner.os }}-sdks-wget-1.21.3-sdk7.0sp1-sdk7.1-
+            ${{ runner.os }}-sdks-
+
+      - name: Install SDKs
+        run: |
+          echo "Installing SDKs..."
+          Start-Process -FilePath ".\SDK7\Setup\WinSDK\WinSDK_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\WinSDKBuild\WinSDKBuild_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\WinSDKInterop\WinSDKInterop_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\WinSDKTools\WinSDKTools_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\WinSDKWin32Tools\WinSDKWin32Tools_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\vc_stdx86\vc_stdx86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\vc_stdamd64\vc_stdamd64.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\winsdk_intellidocs\winsdk_intellidocs.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7\Setup\WinSDKNetFxTools\WinSDK_nfxtoolsm_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\WinSDK\WinSDK_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\WinSDKBuild\WinSDKBuild_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\WinSDKInterop\WinSDKInterop_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\WinSDKTools\WinSDKTools_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\WinSDKWin32Tools\WinSDKWin32Tools_x86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\vc_stdx86\vc_stdx86.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\vc_stdamd64\vc_stdamd64.msi" -ArgumentList "/qn" -Wait
+          Start-Process -FilePath ".\SDK7.1\Setup\WinSDKNetFxTools\WinSDK_nfxtoolsm_x86.msi" -ArgumentList "/qn" -Wait
+          echo "SDKs installation complete."
+
+      - name: Clang version check
+        run: clang --version
+
+      - name: Run debug build
+        run: python build_vp_clang_sdk.py --config debug
+
+      - name: Display debug build log
+        run: cat clang-output/Debug/build.log
+
+#      - name: Run release build
+#        run: python build_vp_clang_sdk.py --config release
+
+#      - name: Display release build log
+#        run: cat clang-output/Release/build.log
+
+      - name: Analyze Clang build warnings and errors
+        if: always()
+        shell: pwsh
+        run: |
+          echo "Analyzing Clang build logs for warnings and errors..."
+          
+          # Function to parse Clang build log and create GitHub annotations
+          function Parse-ClangBuildLog {
+            param($LogFile, $BuildType)
+            
+            if (Test-Path $LogFile) {
+              $content = Get-Content $LogFile
+              $warnings = @()
+              $errors = @()
+              
+              echo "[$BuildType] Processing $($content.Count) lines from $LogFile"
+              
+              foreach ($line in $content) {
+                # Match Clang warning pattern (MSVC-style): filename(line,col) : warning: message
+                if ($line -match '([^(]+)\((\d+),(\d+)\)\s*:\s*warning:\s*(.+)') {
+                  $file = $matches[1] -replace '.*[/\\]', ''  # Get just filename
+                  $lineNum = $matches[2]
+                  $col = $matches[3]
+                  $message = $matches[4]
+                  
+                  # Skip "unknown warning option" warnings as requested
+                  if ($message -match "unknown warning option.*-Wno-enum-constexpr-conversion") {
+                    continue
+                  }
+                  
+                  $warnings += @{
+                    File = $file
+                    Line = $lineNum
+                    Column = $col
+                    Message = $message
+                    FullLine = $line
+                  }
+                  
+                  # Create GitHub annotation
+                  Write-Host "::warning file=$file,line=$lineNum,col=$col::[$BuildType] $message"
+                }
+                
+                # Match Clang error pattern (MSVC-style): filename(line,col) : error: message
+                if ($line -match '([^(]+)\((\d+),(\d+)\)\s*:\s*error:\s*(.+)') {
+                  $file = $matches[1] -replace '.*[/\\]', ''
+                  $lineNum = $matches[2]
+                  $col = $matches[3]
+                  $message = $matches[4]
+                  
+                  $errors += @{
+                    File = $file
+                    Line = $lineNum
+                    Column = $col
+                    Message = $message
+                    FullLine = $line
+                  }
+                  
+                  # Create GitHub annotation
+                  Write-Host "::error file=$file,line=$lineNum,col=$col::[$BuildType] $message"
+                }
+                
+                # Also match standard Clang format: filename:line:col: warning: message
+                if ($line -match '([^:]+):(\d+):(\d+):\s*warning:\s*(.+)' -and $line -notmatch '\(.*\)') {
+                  $file = $matches[1] -replace '.*[/\\]', ''
+                  $lineNum = $matches[2]
+                  $col = $matches[3]
+                  $message = $matches[4]
+                  
+                  # Skip "unknown warning option" warnings as requested
+                  if ($message -match "unknown warning option.*-Wno-enum-constexpr-conversion") {
+                    continue
+                  }
+                  
+                  $warnings += @{
+                    File = $file
+                    Line = $lineNum
+                    Column = $col
+                    Message = $message
+                    FullLine = $line
+                  }
+                  
+                  # Create GitHub annotation
+                  Write-Host "::warning file=$file,line=$lineNum,col=$col::[$BuildType] $message"
+                }
+                
+                # Also match standard Clang error format: filename:line:col: error: message
+                if ($line -match '([^:]+):(\d+):(\d+):\s*error:\s*(.+)' -and $line -notmatch '\(.*\)') {
+                  $file = $matches[1] -replace '.*[/\\]', ''
+                  $lineNum = $matches[2]
+                  $col = $matches[3]
+                  $message = $matches[4]
+                  
+                  $errors += @{
+                    File = $file
+                    Line = $lineNum
+                    Column = $col
+                    Message = $message
+                    FullLine = $line
+                  }
+                  
+                  # Create GitHub annotation
+                  Write-Host "::error file=$file,line=$lineNum,col=$col::[$BuildType] $message"
+                }
+                
+                # Also catch general warning/error lines without file location
+                if ($line -match 'warning:' -and $line -notmatch ':\d+:\d+:') {
+                  Write-Host "::warning::[$BuildType] $line"
+                }
+                if ($line -match 'error:' -and $line -notmatch ':\d+:\d+:') {
+                  Write-Host "::error::[$BuildType] $line"
+                }
+              }
+              
+              echo "[$BuildType] Found $($warnings.Count) warnings and $($errors.Count) errors"
+              return @{ Warnings = $warnings; Errors = $errors }
+            } else {
+              echo "Build log not found: $LogFile"
+              return @{ Warnings = @(); Errors = @() }
+            }
+          }
+          
+          # Parse both Clang build logs
+          echo "Checking for Clang build logs..."
+          if (Test-Path "clang-output/Debug/build.log") {
+            echo "Found Clang Debug log, parsing..."
+            $debugResults = Parse-ClangBuildLog "clang-output/Debug/build.log" "Clang Debug"
+          } else {
+            echo "Clang Debug log not found at clang-output/Debug/build.log"
+            $debugResults = @{ Warnings = @(); Errors = @() }
+          }
+          
+          if (Test-Path "clang-output/Release/build.log") {
+            echo "Found Clang Release log, parsing..."
+            $releaseResults = Parse-ClangBuildLog "clang-output/Release/build.log" "Clang Release"
+          } else {
+            echo "Clang Release log not found at clang-output/Release/build.log"
+            $releaseResults = @{ Warnings = @(); Errors = @() }
+          }
+          
+          # Output summary
+          $totalWarnings = $debugResults.Warnings.Count + $releaseResults.Warnings.Count
+          $totalErrors = $debugResults.Errors.Count + $releaseResults.Errors.Count
+          
+          echo "Clang Build Analysis Complete:"
+          echo "- Total Warnings: $totalWarnings"
+          echo "- Total Errors: $totalErrors"
+          echo "- Debug Warnings: $($debugResults.Warnings.Count)"
+          echo "- Debug Errors: $($debugResults.Errors.Count)"
+          echo "- Release Warnings: $($releaseResults.Warnings.Count)"
+          echo "- Release Errors: $($releaseResults.Errors.Count)"
+          
+          # Fail the build if there are errors
+          if ($totalErrors -gt 0) {
+            Write-Error "Build failed with $totalErrors error(s). Check annotations above for details."
+            exit 1
+          }
+
+      - name: Create debug artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VP_Clang_Debug
+          path: 'clang-output\Debug'
+
+#      - name: Create release artifact
+#        uses: actions/upload-artifact@v4
+#        with:
+#          name: VP_Clang_Release
+#          path: 'clang-output\Release'
+
+
