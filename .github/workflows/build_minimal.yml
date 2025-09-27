@@ -1,4 +1,4 @@
-name: fBuild
+name: quickBuild
 
 permissions:
   contents: read
@@ -140,17 +140,17 @@ jobs:
       - name: Clang version check
         run: clang --version
 
-      - name: Run debug build
-        run: python build_vp_clang_sdk.py --config debug
+#      - name: Run debug build
+#        run: python build_vp_clang_sdk.py --config debug
 
-      - name: Display debug build log
-        run: cat clang-output/Debug/build.log
+#      - name: Display debug build log
+#        run: cat clang-output/Debug/build.log
 
-#      - name: Run release build
-#        run: python build_vp_clang_sdk.py --config release
+      - name: Run release build
+        run: python build_vp_clang_sdk.py --config release
 
-#      - name: Display release build log
-#        run: cat clang-output/Release/build.log
+      - name: Display release build log
+        run: cat clang-output/Release/build.log
 
       - name: Analyze Clang build warnings and errors
         if: always()
@@ -309,16 +309,16 @@ jobs:
             exit 1
           }
 
-      - name: Create debug artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: VP_Clang_Debug
-          path: 'clang-output\Debug'
-
-#      - name: Create release artifact
+#      - name: Create debug artifact
 #        uses: actions/upload-artifact@v4
 #        with:
-#          name: VP_Clang_Release
-#          path: 'clang-output\Release'
+#          name: VP_Clang_Debug
+#          path: 'clang-output\Debug'
+
+      - name: Create release artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VP_Clang_Release
+          path: 'clang-output\Release'
 
 
