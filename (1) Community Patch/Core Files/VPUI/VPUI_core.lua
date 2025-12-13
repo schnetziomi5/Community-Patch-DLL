@@ -1,6 +1,7 @@
 -- Check both context global and MapModData for VP object
-if not VP and not (MapModData and MapModData.VP) then
+if true or ( not VP and not (MapModData and MapModData.VP) ) then
 	-- Need to localize all globals to circumvent their disappearance when entering leader screen
+	
 	local GameInfo = GameInfo;
 	local table = table;
 
@@ -175,14 +176,14 @@ if not VP and not (MapModData and MapModData.VP) then
 	_VP.IconHookupOrDefault = IconHookupOrDefault;
 
 	-- MapModData may not always exist. While it doesn't, we have no choice but to save the VP object under the context global.
-	if MapModData then
-		MapModData.VP = _VP;
-	else
-		VP = _VP;
-	end
+	
+	VP = _VP;
+	
 end
 
--- Include the custom tooltips here
-if MapModData and not MapModData.CommonContext and ContextPtr then
-	MapModData.CommonContext = ContextPtr:LoadNewContext("VPUI_common");
+
+local TTTT = {}
+TTManager:GetTypeControlTable("TechTreeTooltip", TTTT);
+if not TTTT.TechTreeTooltipText then
+	ContextPtr:LoadNewContext("VPUI_common");
 end

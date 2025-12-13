@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 include( "InstanceManager" );
 include( "IconSupport" );
 include( "SupportFunctions" );
