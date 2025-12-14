@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -- CAPTURE CITY POPUP
 -- This popup occurs when a city is capture and must be annexed or puppeted.
 
