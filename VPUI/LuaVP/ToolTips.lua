@@ -15,7 +15,7 @@
 --------------------------------------------------------------------------------------
 TTManager:RegisterBasicControls( Controls.ToolTipRoot, Controls.ToolTipStore, Controls.ToolTipText, Controls.ToolTipGrid );
 
---if true then return end ;
+if #include("enable_vpl") == 0 then return end
 
 local wrappedinit = coroutine.wrap( function() include("vploader") end )
 local print = print ;

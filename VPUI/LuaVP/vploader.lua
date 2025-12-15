@@ -29,6 +29,7 @@ local GAMECORE_LISTENERS ;
 function vplAddGamecoreListener( func ) insert(GAMECORE_LISTENERS,func) end
 
 local function rawgetfromenv( key ) local val = loadstring("return " .. key )(); if val == nil then print("Global is nil", key) end; return val; end
+local function rawunsetinenv( key, val ) loadstring( key .. "=nil" )() end
 local function checkandwarn( tab, key ) if type(key) ~= "string" then print("Non string key!" , key ) elseif tab[key] ~= nil then print( "Key already exists!" , key ) end end
 local function emptyTable( tab ) for k in pairs(tab) do tab[k] = nil end end ;
 
@@ -38,7 +39,8 @@ local init_unsafe = function(op)
 
 	
 	
-	gprint( "################### VPLOADER:INIT@" .. tostring(StateName) .. "@" .. tostring(ContextPtr) .. "########################")
+	gprint( "################### VPLOADER:INIT@" .. tostring(StateName) .. "@" .. tostring(ContextPtr) .. "########################") ;
+	gprint( "op:" , op ) ;
 	local time = os_clock() ;
 
 	--Declare/Override globals and also localize them for use in thise function
@@ -47,6 +49,7 @@ local init_unsafe = function(op)
 		{
 			file = "newGameInfo" ;
 			objects = { "GameInfo" } ;
+			skip_include_on_reinit = true ;
 		};
 		{ 
 			file = "CPK.lua" ;
@@ -57,14 +60,25 @@ local init_unsafe = function(op)
 		{
 			file = "VPUI_core" ;
 			objects = { "VP" } ;
+			unset_objects_on_reinit = true ;
 		};
 		{ 
 			file = "InstanceManager" ;
 			objects = { "InstanceManager", "GenerationalInstanceManager" } ;
+			skip_include_on_reinit = true ;
 		};
 		{
 			file = "InfoTooltipInclude" ;
 			packed_objects = { "EXPORTS_ITTI" } ;
+		};
+		{
+			file = "EUI_tooltips" ;
+			objects = { "EUI", "SimpleInstanceManager", "StackInstanceManager" } ;
+			file_aliases = { "EUI_utilities", "VPL_EUI" } ;
+			unset_objects_on_reinit = true ;
+		};
+		{
+			file = "contexts_comp" ;
 		};
 		
 	}local staticIncludes = staticIncludes ;
@@ -79,6 +93,72 @@ local init_unsafe = function(op)
 		-- Will hold key-object pairs to be imported
 	}local generatedObjects = generatedObjects ;
 	CodeBuddy.vpStaticObjects = generatedObjects ;
+	
+	
+	
+	
+	local function vpinclude( arg1, arg2 )
+		if type(arg1) == "table" then --bulk include support
+			for _, filename in ipairs(arg1) do vpinclude(filename) end
+			
+		elseif type(arg1) == "string" then
+			if arg2 == nil and (importTable[arg1] or EMPTY_TABLE).importstr then -- arg2 == nil -> no regular exp and that file is a known static import
+				loadstring( importTable[arg1].importstr )() ;
+			else --if arg2 is provided or this isn't a known file, just do regular include
+				return orig_include(arg1,arg2);
+			end
+			
+		else -- arg1 not a string!?!?!?!?
+			return error("Argument to vpinclude must be a string or a table!", arg1) ;
+			
+		end
+	end
+	
+	
+	
+	generatedObjects.vpinclude = vpinclude ;
+	generatedObjects.include = vpinclude ;
+	generatedObjects.c5include = orig_include ;
+	
+	
+	importTable.vpinclude = { importstr = [[
+		vpinclude = CodeBuddy.vpStaticObjects.vpinclude ;
+		c5include = CodeBuddy.vpStaticObjects.c5include ;
+		
+		include = CodeBuddy.vpStaticObjects.vpinclude ;
+		]];
+	}
+
+
+	local CORE_LIBS = { "vpinclude" , "CPK.lua" , "newGameInfo" }
+	local currentstate = function() return loadstring("return tostring(StateName)")() end
+	local currentcontext = function() return loadstring("return tostring(ContextPtr)")() end
+	
+	KNOWN_CONTEXTS = {
+		-- Will store tostring(ContextPtr) - MainState of known Contexts...
+	}local KNOWN_CONTEXTS = KNOWN_CONTEXTS;
+	
+	__vpRegisterContext = function (...)
+		if CodeBuddy.vpDebugHook and (not CodeBuddy.vpDebugHook(...)) then
+			return false
+		end
+		
+		local contextname = currentstate() ;
+		local contextptr = currentcontext() ;
+		
+		if KNOWN_CONTEXTS[contextname] then
+			local msg = ( contextptr == KNOWN_CONTEXTS[contextname] and "SAME_CONTEXT_REGISTERED_TWICE" ) or "SAME_UI_LOADED_AGAIN" ;
+			print(msg, contextname, "KnownPtr:", KNOWN_CONTEXTS[contextname], "CurrentPtr:", contextptr ) ;
+		else
+			KNOWN_CONTEXTS[contextname] = contextptr ;
+			--print( "@registerContext():",contextname )
+		end
+		
+		vpinclude( CORE_LIBS );
+		
+		
+		return true ;
+	end
 	
 
 	do -- process the files declard in staticIncludes
@@ -120,17 +200,29 @@ local init_unsafe = function(op)
 		for idx, entry in ipairs(staticIncludes) do
 			
 			-- Step 1: Include the file. Duplicate includes semi silently fail when include is wrapped. The core flag is mainly compat for CPK so that is can bind a special version of include instead...
-			local tmp ;
 			
-			if entry.core then
-				tmp = thraded_safe_include ;
-			else
-				tmp = include_if_not_already ;
+			local tmp = 1;
+			
+			if op ~= "full" then -- some sort of reload
+				if entry.unset_objects_on_reinit then -- some includes (EUI/VPUI) don't run when their objects already exist
+					for _, name in ipairs(entry.objects or EMPTY_TABLE) do
+						rawunsetinenv(name) ;
+					end
+				end
+				tmp = ( entry.skip_include_on_reinit and 99 ) or 1;
+			end 
+			
+			if tmp == 1 then 
+				if entry.core then
+					tmp = thraded_safe_include ;
+				else
+					tmp = include_if_not_already ;
+				end
+				
+				tmp = #( wrapped_include(entry.file, tmp) );
 			end
 			
-			tmp = wrapped_include(entry.file, tmp) ;
-			
-			if tmp == nil or #tmp == 0 then
+			if tmp == 0 then
 				print("Failed to include file!",entry.file);
 				entry.importstr = false ;
 			else
@@ -176,72 +268,6 @@ local init_unsafe = function(op)
 			end
 		end
 	end
-
-
-	local function vpinclude( arg1, arg2 )
-		if type(arg1) == "table" then --bulk include support
-			for _, filename in ipairs(arg1) do vpinclude(filename) end
-			
-		elseif type(arg1) == "string" then
-			if arg2 == nil and (importTable[arg1] or EMPTY_TABLE).importstr then -- arg2 == nil -> no regular exp and that file is a known static import
-				loadstring( importTable[arg1].importstr )() ;
-			else --if arg2 is provided or this isn't a known file, just do regular include
-				return orig_include(arg1);
-			end
-			
-		else -- arg1 not a string!?!?!?!?
-			return error("Argument to vpinclude must be a string or a table!", arg1) ;
-			
-		end
-	end
-	
-	
-	
-	generatedObjects.vpinclude = vpinclude ;
-	generatedObjects.include = vpinclude ;
-	generatedObjects.c5include = orig_include ;
-	
-	
-	importTable.vpinclude = { importstr = [[
-		vpinclude = CodeBuddy.vpStaticObjects.vpinclude ;
-		c5include = CodeBuddy.vpStaticObjects.c5include ;
-		
-		include = CodeBuddy.vpStaticObjects.vpinclude ;
-		]];
-	}
-
-
-	local CORE_LIBS = { "vpinclude" , "CPK.lua" , "newGameInfo" }
-	local currentstate = function() return loadstring("return tostring(StateName)")() end
-	local currentcontext = function() return loadstring("return tostring(ContextPtr)")() end
-	
-	KNOWN_CONTEXTS = {
-		-- Will store tostring(ContextPtr) - MainState of known Contexts...
-	}local KNOWN_CONTEXTS = KNOWN_CONTEXTS;
-	
-	__vpRegisterContext = function (...)
-		if CodeBuddy.vpDebugHook and (not CodeBuddy.vpDebugHook(...)) then
-			return false
-		end
-		
-		
-		
-		local contextname = currentstate() ;
-		local contextptr = currentcontext() ;
-		if KNOWN_CONTEXTS[contextname] then
-			local msg = ( contextptr == KNOWN_CONTEXTS[contextname] and "SAME_CONTEXT_REGISTERED_TWICE" ) or "SAME_UI_LOADED_AGAIN" ;
-			print(msg, contextname, "KnownPtr:", KNOWN_CONTEXTS[contextname], "CurrentPtr:", contextptr ) ;
-		else
-			KNOWN_CONTEXTS[contextname] = contextptr ;
-			--print( "@registerContext():",contextname )
-		end
-		
-		vpinclude( CORE_LIBS );
-		
-		
-		return true ;
-	end
-
 	
 	print( "INIT DONE! Time(ms):" , (os_clock() - time)*1000 )
 end
@@ -251,25 +277,26 @@ local REINIT_REQ = "full" ;
 local __init = coroutine_wrap(function(op)
 	while true do
 		init_unsafe(op)
-		coroutine_yield()
+		op = coroutine_yield() --hehehe
 	end
 end)
 
 local function __checkReinit()
 	if REINIT_REQ then
-		print("REINIT INITIATED!")
-		__init(REINIT_REQ);
+		print("REINIT INITIATED!", REINIT_REQ)
+		local op = REINIT_REQ 
 		REINIT_REQ = false ;
+		__init(op);
 	end
 end
 
 
-local function __requestReinit()
-	print("REINIT REQUESTED")
+local function __requestReinit(op)
+	print("REINIT REQUESTED",op)
 	if newGameInfo then
 		newGameInfo("reset") ;
 	end
-	REINIT_REQ = "full" ;
+	REINIT_REQ = op or "full" ;
 end
 
 CodeBuddy.vpRequestReinit = __requestReinit ;
@@ -291,7 +318,6 @@ end
 local function notifyAllGamecoreSet( GC ) for _,func in ipairs(GAMECORE_LISTENERS) do func(GC) end end
 
 function CodeBuddy.vpSetGameCore( GC )
-	emptyTable( KNOWN_CONTEXTS ) ;
 	GC = GC or {} ;
 	Player = GC.Player;
 	NotificationTypes = GC.NotificationTypes;
@@ -328,7 +354,7 @@ function CodeBuddy.vpSetGameCore( GC )
 	PublicOpinionTypes = GC.PublicOpinionTypes;
 	LeaderheadAnimationTypes = GC.LeaderheadAnimationTypes;
 	GameplayGameStateTypes = GC.GameplayGameStateTypes;
-	MapModData = GC.MapModData;
+	__MapModData = GC.MapModData; -- To be improved...
 	ResourceUsageTypes = GC.ResourceUsageTypes;
 	InterfaceModeTypes = GC.InterfaceModeTypes;
 	FromUIDiploEventTypes = GC.FromUIDiploEventTypes;
@@ -354,6 +380,7 @@ function CodeBuddy.vpSetGameCore( GC )
 	CombatPredictionTypes = GC.CombatPredictionTypes;
 	PolicyBranchTypes = GC.PolicyBranchTypes;
 	notifyAllGamecoreSet( GC );
+	__requestReinit("gc") ;
 end
 
 
@@ -367,3 +394,18 @@ Events.AfterModsActivate.Add(function()
 end);
 --]]
 
+
+
+
+if debug then
+	orig_include( "debug_global_utils" ) ;
+
+	function checkAllThreads()
+		print("Listing all contexts not known to vploader:")
+		for k,env in pairs(debug.G.Threads) do
+			if not env.c5include then
+				print( env.StateName ) ;
+			end
+		end
+	end
+end
