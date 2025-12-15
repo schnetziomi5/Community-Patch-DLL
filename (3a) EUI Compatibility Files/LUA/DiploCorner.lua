@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -------------------------------------------------
 -- Diplomacy and Advisors Buttons that float out in the screen
 -------------------------------------------------

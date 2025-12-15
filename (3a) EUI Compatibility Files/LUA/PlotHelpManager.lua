@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -------------------------------
 -- PlotHelpManager.lua
 -- coded by bc1 from Civ V 1.0.3.276 and Civ BE code

@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -------------------------------------------------
 -- LeaderHeadRoot.lua
 -- modified by bc1 from civ5 brave new world and civBE code

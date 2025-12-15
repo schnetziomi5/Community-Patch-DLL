@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -------------------------------------------------
 -- Tech Tree Popup
 -- updated by psparky for VP - requires EUI 1.28g, as used with VP (changes marked afw)

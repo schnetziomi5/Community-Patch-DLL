@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 print("Loading VictoryProgress.lua from Vox Populi")
 ----------------------------------------------------------------
 ----------------------------------------------------------------
