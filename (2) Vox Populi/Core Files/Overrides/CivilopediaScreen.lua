@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 print("This is the modded CivilopediaScreen.lua from 'CBP'")
 -------------------------------------------------
 -- Civilopedia screen

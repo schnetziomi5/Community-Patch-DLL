@@ -229,7 +229,11 @@ local function indexRootTable( root, token )
 			return nil ;
 		end
 	else
-		error("Can only index by number(ID column if available, otherwise (undefined) cache ordering) or string(if the table has a type column)");
+		if token == nil then -- EUI compat, original GameInfo would (also) scream!
+			return nil ;
+		else
+			error("Can only index by number(ID column if available, otherwise (undefined) cache ordering) or string(if the table has a type column)");
+		end
 	end
 end
 
@@ -379,7 +383,7 @@ end
 
 local MT_GAMEINFO_OBJECT = {
 	__call = function(GI,ops)
-		if ops == "reset" then
+		if ops == "resetprint" then
 			collectgarbage("collect") ;
 			local m = collectgarbage("count") * 1024;
 			local tot = 0 ;
@@ -395,6 +399,9 @@ local MT_GAMEINFO_OBJECT = {
 			end
 			print( tot, "Total") ;
 			print();
+		elseif ops == "reset" then
+			for k in pairs(GI) do GI[k] = nil end
+			print("All tables reset!")
 		end
 		return GI ;
 	end;

@@ -455,7 +455,7 @@ __index = function( t, key ): if tonumber(key) DB_Query("SELECT * from "..tableN
 end
 
 local GameInfoCache = setmetatable( {}, { __index = GameInfoIndex } )
-EUI.GameInfoCache = GameInfoCache
+EUI.GameInfoCache = newGameInfo or GameInfoCache
 local YieldIcons = {}
 EUI.YieldIcons = YieldIcons
 local YieldNames = {}
@@ -522,7 +522,7 @@ function EUI.ResetCache()
 	gk_mode = bnw_mode or ContentManager_IsActive("0E3751A1-F840-4e1b-9706-519BF484E59D", ContentType_GAMEPLAY)
 	setmetatable( IconTextureAtlases, { __index = AtlasMT } )
 	cleartable( IconTextureAtlases )
-	cleartable( GameInfoCache )
+	if GameInfoCache ~= newGameInfo then cleartable( GameInfoCache ) end
 	cleartable( YieldIcons )
 	cleartable( YieldNames )
 	for row in Game and GameInfo.Yields() or DB_Query("SELECT * from Yields") do

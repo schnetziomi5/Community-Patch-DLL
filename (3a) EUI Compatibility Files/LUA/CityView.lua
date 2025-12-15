@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 ------------------------------------------------------
 -- City View
 -- coded by bc1 from 1.0.3.276 brave new world code

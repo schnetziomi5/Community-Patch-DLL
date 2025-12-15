@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 include("FLuaVector")
 
 local highlights = { Red     = Vector4(1.0, 0.0, 0.0, 1.0), 

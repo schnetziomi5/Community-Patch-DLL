@@ -1,3 +1,4 @@
+if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -------------------------------------------------
 -- CityBannerManager
 -- modified by bc1 from 1.0.3.144 brave new world code
