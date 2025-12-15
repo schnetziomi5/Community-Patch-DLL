@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 print("This is the 'Global - Archaeologist Dig Sites' mod script.")
 
 local iArchaeologist = GameInfoTypes.UNIT_ARCHAEOLOGIST

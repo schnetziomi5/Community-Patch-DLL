@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -------------------------------------------------
 -- Enemy Unit Panel Screen + Combat Simulator
 -------------------------------------------------

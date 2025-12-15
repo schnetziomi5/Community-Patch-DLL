@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -- balparmak: 17/10/22 integrated Religion Spread based on HungryForFood's v2
 -------------------------------------------------
 -- Religion Overview Popup

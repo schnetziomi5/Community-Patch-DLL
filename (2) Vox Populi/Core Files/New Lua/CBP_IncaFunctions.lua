@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -- CBP_IncaFunctions
 -- Author: Deo-e
 -- DateCreated: 12/12/2015 3:29:45 PM

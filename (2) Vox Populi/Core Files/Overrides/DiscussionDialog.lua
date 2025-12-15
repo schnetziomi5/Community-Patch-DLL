@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 print("This is the modded DiscussionDialog.lua from CBP - C4DF")
 ----------------------------------------------------------------
 ----------------------------------------------------------------

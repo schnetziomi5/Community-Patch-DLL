@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 MapModData = nil ; --Prevents includes like CPK or VPUI to save themselves there and have their global environment invalidated later...
 include( "IconSupport" );
 include( "UniqueBonuses" );

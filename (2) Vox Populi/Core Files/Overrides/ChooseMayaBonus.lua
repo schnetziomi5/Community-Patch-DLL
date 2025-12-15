@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 print("This is the modded ChooseMayaBonuws from 'CBP'")
 -------------------------------------------------
 -- Choose Maya Bonus Popup

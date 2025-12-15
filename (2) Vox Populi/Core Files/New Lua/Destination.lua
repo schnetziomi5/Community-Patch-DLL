@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 print("This is the 'UI - Destination' mod script.")
 
 include("FLuaVector")

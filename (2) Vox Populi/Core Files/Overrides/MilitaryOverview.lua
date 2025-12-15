@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 print("Loading MilitaryOverview.lua from 'VP-UI - Show XP in Military Overview'")
 -------------------------------------------------
 -- Military

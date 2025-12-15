@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -- modified by bc1 from 1.0.3.144 brave new world code
 -- partial fix for sub visibility
 -------------------------------------------------

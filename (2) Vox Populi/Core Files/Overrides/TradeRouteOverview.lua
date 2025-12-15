@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -- 30/10/22 integrated Filters in Trade Route Overview
 print("Loading TradeRouteOverview.lua from 'UI - Filters in Trade Route Overview (Vox Populi)' version 2"); -- TROE
 

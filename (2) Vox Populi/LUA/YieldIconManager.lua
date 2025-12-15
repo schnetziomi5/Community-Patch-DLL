@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 -------------------------------------------------
 -- Yield Icon Manager
 -- re-written by bc1, compatible with all Civ V and BE versions

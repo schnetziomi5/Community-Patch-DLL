@@ -1,4 +1,3 @@
-if CodeBuddy.vpRegisterContext and not CodeBuddy.vpRegisterContext() then return end
 local log_level = 2	-- 1=debug, 2=info, 3=error
 local function error(msg) if log_level <= 3 then print(msg) end end
 local function info(msg) if log_level <= 2 then print(msg) end end

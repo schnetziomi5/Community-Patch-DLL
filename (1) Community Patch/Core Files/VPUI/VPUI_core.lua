@@ -187,11 +187,3 @@ end
 if MapModData and not MapModData.CommonContext and ContextPtr then
 	MapModData.CommonContext = ContextPtr:LoadNewContext("VPUI_common");
 end
-
-if FLAG_STATIC_INCLUDE_ENV then
-	local TTTT = {}
-	TTManager:GetTypeControlTable("TechTreeTooltip", TTTT);
-	if not TTTT.TechTreeTooltipText then
-		ContextPtr:LoadNewContext("VPUI_common");
-	end
-end
