@@ -1629,8 +1629,8 @@ int CvLuaUnit::lCanEverRangeStrikeAt(lua_State* L)
 	CvUnit* pkUnit = GetInstance(L);
 	const int x = lua_tointeger(L, 2);
 	const int y = lua_tointeger(L, 3);
-	
-	if ( lua_gettop >= 5 )
+
+	if ( lua_gettop(L) >= 5 )
 	{
 		const int sx = lua_tointeger(L, 4);
 		const int sy = lua_tointeger(L, 5);
