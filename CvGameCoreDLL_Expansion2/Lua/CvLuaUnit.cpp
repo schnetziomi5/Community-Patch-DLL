@@ -1634,6 +1634,7 @@ int CvLuaUnit::lCanEverRangeStrikeAt(lua_State* L)
 	{
 		const int sx = lua_tointeger(L, 4);
 		const int sy = lua_tointeger(L, 5);
+		const CvPlot* pTargetPlot = GC.getMap().plot(sx,sy) ;
 		const bool ignoreVision = luaL_optbool(L, 6, false) ; 
 		const bool bResult = pkUnit->canEverRangeStrikeAt(x, y, pTargetPlot, ignoreVision);
 		lua_pushboolean(L, bResult);
