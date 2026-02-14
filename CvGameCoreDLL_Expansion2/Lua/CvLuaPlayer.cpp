@@ -16945,7 +16945,7 @@ int CvLuaPlayer::lGetEspionageSpies(lua_State* L)
 			CvCity* pCity = pPlot->getPlotCity();
 			if (pCity)
 			{
-				lua_pushboolean(L, pCity->GetCityEspionage()->GetRevealCityScreen( pPlayer->GetID() ) );
+				lua_pushboolean(L, pCity->GetCityEspionage()->GetRevealCityScreen( pkThisPlayer->GetID() ) );
 				lua_setfield(L,t,"RevealCityScreen");
 				lua_pushinteger(L, pkPlayerEspionage->CalcNetworkPointsPerTurn(pSpy->GetSpyState(), pCity, uiSpy));
 			}
