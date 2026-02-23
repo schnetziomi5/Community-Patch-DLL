@@ -174,7 +174,12 @@ void CvLuaScopedInstance<Derived, InstanceType>::Push(lua_State* L, InstanceType
 		// -4 : Types{}
 
 		lua_replace(L,-4);
-		lua_pop(L,3);
+
+		// -1 : Instances{}
+		// -2 : Type{}
+		// -3 : Obj{}
+
+		lua_pop(L,2);
 		
 	}
 	else
