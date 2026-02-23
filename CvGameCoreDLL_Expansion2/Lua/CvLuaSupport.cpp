@@ -96,7 +96,7 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 		"__call=function() return g(0) end;"
 	"});";
 	
-	lua_dostring(L,luacommand);
+	luaL_dostring(L,luacommand);
 
 	//------------------------------------------
 
