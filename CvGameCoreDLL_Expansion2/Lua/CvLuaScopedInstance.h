@@ -23,7 +23,7 @@ public:
 	}
 	static InstanceType* GetInstance(lua_State* L, int idx = 1, bool bErrorOnFail = true);
 
-	static void PushTypeTable(lua_State* L)
+	static void PushTypeTable(lua_State* L);
 
 	//! Used by CvLuaMethodWrapper to know where first argument is.
 	static const int GetStartingArgIndex();

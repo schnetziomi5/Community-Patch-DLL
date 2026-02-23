@@ -23,6 +23,10 @@
 #include "CvLuaGame.h"
 #include "CvLuaPlayer.h"
 #include "CvLuaTeam.h"
+#include "CvLuaCity.h"
+#include "CvLuaPlot.h"
+#include "CvLuaUnit.h"
+#include "CvLuaTeamTech.h"
 
 #pragma warning(disable:4800 ) //forcing value to bool 'true' or 'false'
 
