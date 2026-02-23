@@ -44,13 +44,24 @@ bool luaL_optbool(lua_State* L, int idx, bool bdefault)
 //------------------------------------------------------------------------------
 void LuaSupport::RegisterScriptData(lua_State* L)
 {
+	//Register some plain datatables
 	CvLuaEnums::Register(L);
-	CvLuaFractal::Register(L);
 	CvLuaGameInfo::Register(L);
+
+	//Register static interfaces
+	CvLuaFractal::Register(L);
 	CvLuaMap::Register(L);
 	CvLuaGame::Register(L);
+
+	//Register Players and Teams - those instances already exist
 	CvLuaPlayer::Register(L);
 	CvLuaTeam::Register(L);
+
+	//Register additional lua types, for which instances will only be created on demand
+	CvLuaCity::PushTypeTable(L);
+	CvLuaPlot::PushTypeTable(L);
+	CvLuaUnit::PushTypeTable(L);
+	CvLuaTeamTech::PushTypeTable(L);
 }
 
 //------------------------------------------------------------------------------
