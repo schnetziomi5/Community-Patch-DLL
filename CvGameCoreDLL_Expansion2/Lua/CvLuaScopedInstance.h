@@ -118,7 +118,7 @@ void CvLuaScopedInstance<Derived, InstanceType>::PushTypeTable(lua_State* L)
 
 		// -1 : Type{}
 		// -2 : Types{}
-		lua_replace(-2);
+		lua_replace(L,-2);
 }
 
 template<class Derived, class InstanceType>
