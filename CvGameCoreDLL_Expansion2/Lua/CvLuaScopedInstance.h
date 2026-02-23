@@ -52,7 +52,25 @@ void CvLuaScopedInstance<Derived, InstanceType>::Push(lua_State* L, InstanceType
 	{
 		//const int t = lua_gettop(L);
 
-		lua_getglobal(L, Derived::GetTypeName());
+		//lua_getglobal(L, Derived::GetTypeName());
+		
+		lua_getglobal(L, "LuaTypes");
+		if(lua_isnil(L,-1))
+		{
+			lua_pop(L,1);
+			lua_newtable(L);
+
+			lua_pushvalue(L,-1);
+			lua_setglobal(L,"LuaTypes");
+		}
+
+		// -1 : Types{} = _ENV["LuaTypes"] 
+
+		lua_getfield(L, -1, Derived::GetTypeName());
+
+		// -1 : Type{}/nil = Types["TypeName"]
+		// -2 : Types{}
+
 		if(lua_isnil(L, -1))
 		{
 			//Typename wasn't found, time to build it.
@@ -63,59 +81,101 @@ void CvLuaScopedInstance<Derived, InstanceType>::Push(lua_State* L, InstanceType
 			lua_pushstring(L, "__instances");
 			lua_newtable(L);
 
+			// -1 : {}
+			// -2 : "__instances"
+			// -3 : Type{}
+			// -4 : Types{}
+
 			//Create __instances.mt
-			lua_newtable(L);
+			lua_createtable(L, 0, 1);
 			lua_pushstring(L, "__mode");
 			lua_pushstring(L, "v");
-			lua_rawset(L, -3);				// mt.__mode = "v";
-			lua_setmetatable(L, -2);
+			lua_rawset(L, -3);				// mt.__mode = "v";	
 
+			// -1 : { __mode = "v" }
+			// -2 : {}
+			// -3 : "__instances"
+			// -4 : Type{}
+			// -5 : Types{}
+
+			lua_setmetatable(L, -2);
 			lua_rawset(L, -3);				//type.__instances = t;
 
+			// -1 : Types{ __instances = {} }
+			// -2 : Types{}
 
-			lua_pushvalue(L, -1);
-			lua_setglobal(L, Derived::GetTypeName());
+			//type.__metatable = { __index = type } ;
+			lua_pushstring(L,"__index");
+			lua_pushvalue(L,-2);
 
+			// -1 : Type{ __instances = {} }
+			// -2 : "__index"
+			// -3 : Type{ __instances = {} }
+			// -4 : Types{}
+
+			lua_rawset(L,-3);
+
+			// -1 : Type{ ... }
+			// -2 : Types{}
+
+			lua_pushstring(L, Derived::GetTypeName());
+			lua_pushvalue(L, -2);
+
+			// -1 : Type{ ... }
+			// -2 : $TypeName$
+			// -3 : Type{ ... }
+			// -4 : Types{}
+
+			lua_rawset(L,-4);
 			Derived::PushMethods(L, lua_gettop(L));
 		}
-		const int type_index = lua_gettop(L);
+
+		// -1 : Type{ ... }
+		// -2 : Types{ $TypeName$ = Type }
 
 		lua_pushstring(L, "__instances");
 		lua_rawget(L, -2);
 
-		const int instances_index = lua_gettop(L);
+		// -1 : Instances{} = Type["__instances"]
+		// -2 : Type{ ... }
+		// -3 : Types{ ... }
 
 		lua_pushlightuserdata(L, pkType);
-
 		lua_rawget(L, -2);					//retrieve type.__instances[pkType]
+
+		// -1 : Obj{}/nil = Instances[pkType]
+		// -2 : Instances{}
+		// -3 : Type{}
+		// -4 : Types{}
 
 		if(lua_isnil(L, -1))
 		{
 			lua_pop(L, 1);
-
-			//Push new instance
 			lua_createtable(L, 0, 1);
-			lua_pushlightuserdata(L, pkType);
-			lua_setfield(L, -2, "__instance");
 
-			lua_createtable(L, 0, 1);			// create mt
-			lua_pushstring(L, "__index");
-			lua_pushvalue(L, type_index);
-			lua_rawset(L, -3);					// mt.__index = Type
+			//Push and assign pointer
+			lua_pushlightuserdata(L, pkType);
+			lua_pushstring(L,"__instance");
+			lua_rawset(L, -3);
+
+			//Push and assign metatable
+			lua_pushvalue(L,-3);
 			lua_setmetatable(L, -2);
 
 			//Assign it in instances
 			lua_pushlightuserdata(L, pkType);
 			lua_pushvalue(L, -2);
-			lua_rawset(L, instances_index);				//__instances[pkType] = t;
+			lua_rawset(L, -4);				//__instances[pkType] = t;
 		}
 
-		//VERIFY(instances_index > type_index);
-		lua_remove(L, instances_index);
-		lua_remove(L, type_index);
+		// -1 : Obj{}
+		// -2 : Instances{}
+		// -3 : Type{}
+		// -4 : Types{}
 
-		//const int dt = lua_gettop(L);
-		//VERIFY(dt == t + 1)
+		lua_replace(L,-4);
+		lua_pop(L,3);
+		
 	}
 	else
 	{
