@@ -154,8 +154,8 @@ void CvLuaScopedInstance<Derived, InstanceType>::Push(lua_State* L, InstanceType
 			lua_createtable(L, 0, 1);
 
 			//Push and assign pointer
-			lua_pushlightuserdata(L, pkType);
 			lua_pushstring(L,"__instance");
+			lua_pushlightuserdata(L, pkType);
 			lua_rawset(L, -3);
 
 			//Push and assign metatable
