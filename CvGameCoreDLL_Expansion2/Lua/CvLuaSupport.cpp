@@ -69,31 +69,33 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 
 	//-----------------------------------------
 	// Restore access to some core lua functionality hidden away by Fireaxis, but still keep the sandbox intact
-	// Use lua_dostring(), because it's easier to see what's happening and this code runs only once, so perfomance should be ok still
+	// Use lua_dostring(), because it's more comfortable to code and easier to see what's happening
 
 	lua_pushvalue(L, LUA_REGISTRYINDEX);
 	lua_setglobal(L, "R");
 
 	const char* luacommand = "" 
 
-	"local G=R._LOADED._G;R=nil;"
+	"local G = R._LOADED._G;"
+	"R = nil;"
 
-	"rawset=G.rawset;"
-	"rawget=G.rawget;"
-	"newproxy=G.newproxy;"
+	"rawset = G.rawset;"
+	"rawget = G.rawget;"
+	"newproxy = G.newproxy;"
 
 	"FireaxisObjects={"
-		"UI=G.UI;"
-		"Threads=G.Threads;"
-		"GameInfo=G.GameInfo;"
-		"GameDefines=G.GameDefines;"
+		"UI = G.UI;"
+		"Threads = G.Threads;"
+		"GameInfo = G.GameInfo;"
+		"GameDefines = G.GameDefines;"
 	"};"
 
 	"local g = G.getfenv;"
+	"GameCore = g(0);"
 	"_ENV = G.setmetatable( {}, {"
-		"__index=function(T,k) return g(0)[k] end;"
-		"__newindex=function(T,k,v) g(0)[k]=v end;"
-		"__call=function() return g(0) end;"
+		"__index = function(T,k) return g(0)[k] end;"
+		"__newindex = function(T,k,v) g(0)[k] = v end;"
+		"__call = function() return g(0) end;"
 	"});";
 	
 	luaL_dostring(L,luacommand);
