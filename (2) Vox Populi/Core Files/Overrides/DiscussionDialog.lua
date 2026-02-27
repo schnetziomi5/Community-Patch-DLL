@@ -31,6 +31,10 @@ local offsetsBetweenFrames = 4;
 
 local oldCursor = 0;
 
+if MapModData and MapModData.UI_bc1 and MapModData.UI_bc1.GetMoodInfo then
+	GetMoodInfo = MapModData.UI_bc1.GetMoodInfo ; --if EUI is enabled, also use its version of GetMoodInfo here, for conistency...
+end
+
 ----------------------------------------------------------------        
 -- LEADER MESSAGE HANDLER
 ----------------------------------------------------------------        
