@@ -110,7 +110,7 @@ WHERE Tag = 'TXT_KEY_BUILDING_LABORATORY_STRATEGY';
 
 -- Observatory
 UPDATE Language_en_US
-SET Text = 'The Observatory increases [ICON_RESEARCH] Science output, especially for Cities near lots of Mountains. Requires [COLOR_MAGENTA]{TXT_KEY_POLICY_SECULARISM}[ENDCOLOR] Policy to unlock.'
+SET Text = 'The Observatory increases [ICON_RESEARCH] Science output, especially for Cities near lots of Mountains.'
 WHERE Tag = 'TXT_KEY_BUILDING_OBSERVATORY_STRATEGY';
 
 -- Windmill
@@ -352,6 +352,10 @@ WHERE Tag = 'TXT_KEY_BUILDING_TWOKAY_FOODS_FRANCHISE_HELP';
 UPDATE Language_en_US
 SET Text = '{TXT_KEY_CORPORATION_TRADE_ROUTE_BONUS_CIVILIZED_JEWELERS}'
 WHERE Tag = 'TXT_KEY_BUILDING_CIVILIZED_JEWELERS_FRANCHISE_HELP';
+
+UPDATE Language_en_US
+SET Text = '{TXT_KEY_CORPORATION_TRADE_ROUTE_BONUS_POPULI_MEDICINE}'
+WHERE Tag = 'TXT_KEY_BUILDING_POPULI_MEDICINE_FRANCHISE_HELP';
 
 -- Theming bonuses
 UPDATE Language_en_US 

@@ -555,6 +555,7 @@
     <File md5="B2328FD0387B8D177C2D97039D9D9999" import="0">Database Changes/City/Projects/ProjectTableChanges.sql</File>
     <File md5="274DC089B727CFCF69B0337F3B21C625" import="0">Database Changes/Civilizations/CivilizationChanges.sql</File>
     <File md5="F84FC0C21F4A11D162F4C04948EC478F" import="0">Database Changes/Civilizations/NewCivilizationTables.xml</File>
+    <File md5="6694D2B25D389BA5CBEAF077643FB904" import="0">Database Changes/Civilizations/CivilizationTableChanges.sql</File>
     <File md5="B4DA5141F34AA9B24A8C9A1A4B8274E2" import="0">Database Changes/Civilizations/NewTraitTables.xml</File>
     <File md5="EFF22272C1297968AE58E25650491E43" import="0">Database Changes/Civilizations/TraitChanges.sql</File>
     <File md5="42D27D9421733E59A91C217FDB9B1B14" import="0">Database Changes/Civilizations/TraitTableChanges.sql</File>
@@ -575,7 +576,9 @@
     <File md5="76C2084139414723D7C3C6F3FC5DED3D" import="0">Database Changes/Events/NewEventTables.xml</File>
     <File md5="0511A30F6DE34B29A94B48E50273CA85" import="0">Database Changes/Minors/CoreNewMinorQuests.xml</File>
     <File md5="D983FAC8F864336264448A6A5CEBDC9E" import="0">Database Changes/Minors/MinorQuestTableChanges.sql</File>
+    <File md5="1FEA0A00E00FF33965F4366E4d3863C4" import="0">Database Changes/Minors/CoreNewMinorTables.xml</File>
     <File md5="0D34A73F384820888AE225215B61AE64" import="0">Database Changes/Minors/MinorTableChanges.sql</File>
+    <File md5="50648A6286D211466BB6DDfEBB39B339" import="0">Database Changes/Minors/CoreMinorYieldChanges.sql</File>
     <File md5="028FA5959EF6F425AB88635FA56B8183" import="0">Database Changes/Mod Support/NewContractTables.xml</File>
     <File md5="5C2852DCB3D12D33F70486B229B310F8" import="0">Database Changes/Mod Support/NewDiploModifierTables.xml</File>
     <File md5="078FEB0A8D7806DE0CA2BF3499C9328B" import="0">Database Changes/Policies/NewPolicyTables.xml</File>
@@ -774,6 +777,7 @@
       <UpdateDatabase>Database Changes\City\Buildings\NewBuildingTables.xml</UpdateDatabase>
       <UpdateDatabase>Database Changes\City\Projects\NewProjectTables.xml</UpdateDatabase>
       <UpdateDatabase>Database Changes\Civilizations\NewCivilizationTables.xml</UpdateDatabase>
+      <UpdateDatabase>Database Changes\Civilizations\CivilizationTableChanges.sql</UpdateDatabase>
       <UpdateDatabase>Database Changes\Civilizations\NewTraitTables.xml</UpdateDatabase>
       <UpdateDatabase>Database Changes\Corporations\NewCorporationTables.xml</UpdateDatabase>
       <UpdateDatabase>Database Changes\Difficulty\NewDifficultyTables.xml</UpdateDatabase>
@@ -802,7 +806,9 @@
       <UpdateDatabase>Database Changes\Concepts\ConceptTableChanges.sql</UpdateDatabase>
       <UpdateDatabase>Database Changes\Difficulty\DifficultyTableChanges.sql</UpdateDatabase>
       <UpdateDatabase>Database Changes\Minors\MinorQuestTableChanges.sql</UpdateDatabase>
+      <UpdateDatabase>Database Changes\Minors\CoreNewMinorTables.xml</UpdateDatabase>
       <UpdateDatabase>Database Changes\Minors\MinorTableChanges.sql</UpdateDatabase>
+      <UpdateDatabase>Database Changes\Minors\CoreMinorYieldChanges.sql</UpdateDatabase>
       <UpdateDatabase>Database Changes\Policies\PolicyTableChanges.sql</UpdateDatabase>
       <UpdateDatabase>Database Changes\Religions\BeliefTableChanges.sql</UpdateDatabase>
       <UpdateDatabase>Database Changes\Religions\ReligionTableChanges.sql</UpdateDatabase>

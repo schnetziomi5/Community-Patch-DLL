@@ -267,6 +267,7 @@ CvPromotionEntry::CvPromotionEntry():
 	m_bAirSweepCapable(false),
 	m_bAllowsEmbarkation(false),
 	m_bRangeAttackIgnoreLOS(false),
+	m_iSeeThrough(0),
 	m_bFreePillageMoves(false),
 	m_bHealOnPillage(false),
 	m_bHealIfDefeatExcludesBarbarians(false),
@@ -315,6 +316,7 @@ CvPromotionEntry::CvPromotionEntry():
 	m_iNearbyHealEnemyTerritory(0),
 	m_iNearbyHealNeutralTerritory(0),
 	m_iNearbyHealFriendlyTerritory(0),
+	m_iPassiveAoEHeal(0),
 	m_iAdjacentEnemySapMovement(0),
 	m_bCanHeavyCharge(false),
 	m_piTerrainAttackPercent(NULL),
@@ -323,7 +325,7 @@ CvPromotionEntry::CvPromotionEntry():
 	m_piFeatureDefensePercent(NULL),
 	m_piTerrainModifierAttack(NULL),
 	m_piTerrainModifierDefense(NULL),
-	m_piYieldFromScouting(NULL),
+	m_piYieldFromScoutingTimes100(NULL),
 	m_piYieldFromKills(NULL),
 	m_piYieldFromBarbarianKills(NULL),
 	m_piYieldFromCombatExperienceTimes100(NULL),
@@ -373,7 +375,7 @@ CvPromotionEntry::~CvPromotionEntry(void)
 	SAFE_DELETE_ARRAY(m_piFeatureDefensePercent);
 	SAFE_DELETE_ARRAY(m_piTerrainModifierAttack);
 	SAFE_DELETE_ARRAY(m_piTerrainModifierDefense);
-	SAFE_DELETE_ARRAY(m_piYieldFromScouting);
+	SAFE_DELETE_ARRAY(m_piYieldFromScoutingTimes100);
 	SAFE_DELETE_ARRAY(m_piYieldModifier);
 	SAFE_DELETE_ARRAY(m_piYieldFromAncientRuins);
 	SAFE_DELETE_ARRAY(m_piYieldFromTRPlunder);
@@ -523,6 +525,7 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	m_bAirSweepCapable = kResults.GetBool("AirSweepCapable");
 	m_bAllowsEmbarkation = kResults.GetBool("AllowsEmbarkation");
 	m_bRangeAttackIgnoreLOS = kResults.GetBool("RangeAttackIgnoreLOS");
+	m_iSeeThrough = kResults.GetInt("SeeThrough");
 	m_bFreePillageMoves = kResults.GetBool("FreePillageMoves");
 	m_bHealOnPillage = kResults.GetBool("HealOnPillage");
 	m_bHealIfDefeatExcludesBarbarians = kResults.GetBool("HealIfDestroyExcludesBarbarians");
@@ -571,6 +574,7 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	m_iNearbyHealEnemyTerritory = kResults.GetInt("NearbyHealEnemyTerritory");
 	m_iNearbyHealNeutralTerritory = kResults.GetInt("NearbyHealNeutralTerritory");
 	m_iNearbyHealFriendlyTerritory = kResults.GetInt("NearbyHealFriendlyTerritory");
+	m_iPassiveAoEHeal = kResults.GetInt("PassiveAoEHeal");
 
 	m_iAdjacentEnemySapMovement = kResults.GetInt("AdjacentEnemySapMovement");
 	m_bCanHeavyCharge = kResults.GetBool("HeavyCharge");
@@ -895,15 +899,15 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 	kUtility.SetYields(m_piYieldFromAncientRuins, "UnitPromotions_YieldFromAncientRuins", "PromotionType", szPromotionType);
 	kUtility.SetYields(m_piYieldFromTRPlunder, "UnitPromotions_YieldFromTRPlunder", "PromotionType", szPromotionType);
 
-	//UnitPromotions_YieldFromScouting
+	//UnitPromotions_YieldFromScoutingTimes100
 	{
-		kUtility.InitializeArray(m_piYieldFromScouting, NUM_YIELD_TYPES, 0);
+		kUtility.InitializeArray(m_piYieldFromScoutingTimes100, NUM_YIELD_TYPES, 0);
 
-		std::string sqlKey = "UnitPromotions_YieldFromScouting";
+		std::string sqlKey = "UnitPromotions_YieldFromScoutingTimes100";
 		Database::Results* pResults = kUtility.GetResults(sqlKey);
 		if(pResults == NULL)
 		{
-			const char* szSQL = "select Yields.ID as YieldID, UnitPromotions_YieldFromScouting.* from UnitPromotions_YieldFromScouting inner join Yields on YieldType = Yields.Type where PromotionType = ?";
+			const char* szSQL = "select Yields.ID as YieldID, UnitPromotions_YieldFromScoutingTimes100.* from UnitPromotions_YieldFromScoutingTimes100 inner join Yields on YieldType = Yields.Type where PromotionType = ?";
 			pResults = kUtility.PrepareResults(sqlKey, szSQL);
 		}
 
@@ -918,7 +922,7 @@ bool CvPromotionEntry::CacheResults(Database::Results& kResults, CvDatabaseUtili
 			PRECONDITION(iYieldID > -1 && iYieldID < NUM_YIELD_TYPES);
 
 			const int iYield = pResults->GetInt("Yield");
-			m_piYieldFromScouting[iYieldID] = iYield;
+			m_piYieldFromScoutingTimes100[iYieldID] = iYield;
 		}
 	}
 	//UnitPromotions_YieldFromKills
@@ -2640,6 +2644,12 @@ bool CvPromotionEntry::IsRangeAttackIgnoreLOS() const
 	return m_bRangeAttackIgnoreLOS;
 }
 
+/// Accessor: How much does this unit have altered SeeThrough
+int CvPromotionEntry::GetSeeThrough() const
+{
+	return m_iSeeThrough;
+}
+
 /// Accessor: Lose no movement when pillaging?
 bool CvPromotionEntry::IsFreePillageMoves() const
 {
@@ -2829,6 +2839,11 @@ int CvPromotionEntry::GetNearbyHealFriendlyTerritory() const
 	return m_iNearbyHealFriendlyTerritory;
 }
 
+int CvPromotionEntry::GetPassiveAoEHeal() const
+{
+	return m_iPassiveAoEHeal;
+}
+
 int CvPromotionEntry::GetAdjacentEnemySapMovement() const
 {
 	return m_iAdjacentEnemySapMovement;
@@ -3013,14 +3028,14 @@ int CvPromotionEntry::GetYieldFromTRPlunder(int i) const
 	return 0;
 }
 
-int CvPromotionEntry::GetYieldFromScouting(int i) const
+int CvPromotionEntry::GetYieldFromScoutingTimes100(int i) const
 {
 	PRECONDITION(i < NUM_YIELD_TYPES, "Index out of bounds");
 	PRECONDITION(i > -1, "Index out of bounds");
 
-	if(i > -1 && i < NUM_YIELD_TYPES && m_piYieldFromScouting)
+	if(i > -1 && i < NUM_YIELD_TYPES && m_piYieldFromScoutingTimes100)
 	{
-		return m_piYieldFromScouting[i];
+		return m_piYieldFromScoutingTimes100[i];
 	}
 
 	return 0;

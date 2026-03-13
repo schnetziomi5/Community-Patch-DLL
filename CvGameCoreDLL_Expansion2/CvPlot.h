@@ -162,7 +162,7 @@ public:
 	void changeSeeFromSight(TeamTypes eTeam, DirectionTypes eDirection, int iFromLevel, bool bIncrement, InvisibleTypes eSeeInvisible, CvUnit* pUnit=NULL);
 	void changeAdjacentSight(TeamTypes eTeam, int iRange, bool bIncrement, InvisibleTypes eSeeInvisible, DirectionTypes eFacingDirection, CvUnit* pUnit=NULL);
 	void changeEspionageSight(TeamTypes eTeam, CvCity* pCity, int iRange, bool bIncrement);
-	bool canSeePlot(const CvPlot* plot, TeamTypes eTeam, int iRange, DirectionTypes eFacingDirection) const;
+	bool canSeePlot(const CvPlot* plot, TeamTypes eTeam, int iRange, DirectionTypes eFacingDirection, int iSeeThrough = 0) const;
 	bool shouldProcessDisplacementPlot(int dx, int dy, int range, DirectionTypes eFacingDirection) const;
 	void updateSight(bool bIncrement);
 	void updateSeeFromSight(bool bIncrement, bool bRecalculate);
@@ -173,7 +173,7 @@ public:
 
 	bool CanSpawnResource(PlayerTypes ePlayer, bool bIgnoreTech = true, bool bIsLand=true) const;
 
-	bool canBuild(BuildTypes eBuild, PlayerTypes ePlayer = NO_PLAYER, bool bTestVisible = false, bool bTestPlotOwner = true, bool bTestXAdjacent = false) const;
+	bool canBuild(BuildTypes eBuild, PlayerTypes ePlayer = NO_PLAYER, bool bTestVisible = false, bool bTestPlotOwner = true, bool bTestXAdjacent = false, CvString* toolTipSink = NULL) const;
 	int getBuildTime(BuildTypes eBuild, PlayerTypes ePlayer) const;
 	int getBuildTurnsTotal(BuildTypes eBuild, PlayerTypes ePlayer) const;
 	int getBuildTurnsLeft(BuildTypes eBuild, PlayerTypes ePlayer, int iNowExtra = 0, int iThenExtra = 0) const;

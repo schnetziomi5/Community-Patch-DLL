@@ -458,7 +458,7 @@ WHERE Tag = 'TXT_KEY_PROMOTION_NATIONALISM_HELP';
 
 -- Altitude Training
 UPDATE Language_en_US
-SET Text = 'Double [ICON_MOVES] Movement in [COLOR_POSITIVE_TEXT]Hill[ENDCOLOR].[NEWLINE]+10% [ICON_STRENGTH] Combat Strength when fighting in [COLOR_POSITIVE_TEXT]Hill[ENDCOLOR].'
+SET Text = '+10% [ICON_STRENGTH] Combat Strength when fighting in [COLOR_POSITIVE_TEXT]Hill[ENDCOLOR].'
 WHERE Tag = 'TXT_KEY_PROMOTION_ALTITUDE_TRAINING_HELP';
 
 -- Morale 
@@ -570,7 +570,7 @@ WHERE Tag = 'TXT_KEY_PROMOTION_GREAT_GENERAL_HELP';
 
 -- Naval Leadership
 UPDATE Language_en_US
-SET Text = '+15% [ICON_STRENGTH] Combat Strength for [COLOR_POSITIVE_TEXT]Naval Units[ENDCOLOR] within 2 tiles of this Unit.[NEWLINE]May use the [COLOR_POSITIVE_TEXT]{TXT_KEY_MISSION_REPAIR_FLEET}[ENDCOLOR] Ability, expending this Unit and fully healing all [COLOR_POSITIVE_TEXT]Naval[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Embarked Units[ENDCOLOR] on or adjacent to this tile.'
+SET Text = '+15% [ICON_STRENGTH] Combat Strength and +3 [COLOR_POSITIVE_TEXT]Healing[ENDCOLOR] per turn for [COLOR_POSITIVE_TEXT]Naval Units[ENDCOLOR] within 2 tiles of this Unit.'
 WHERE Tag = 'TXT_KEY_PROMOTION_GREAT_ADMIRAL_HELP';
 
 -- Withdraw Before Melee
@@ -624,11 +624,6 @@ WHERE Tag = 'TXT_KEY_PROMOTION_PARTIAL_HEAL_IF_DESTROY_ENEMY';
 UPDATE Language_en_US
 SET Text = '+33% [ICON_STRENGTH] Combat Strength when defending in or attacking a Unit in [COLOR_POSITIVE_TEXT]Forest[ENDCOLOR] and [COLOR_POSITIVE_TEXT]Jungle[ENDCOLOR].'
 WHERE Tag = 'TXT_KEY_PROMOTION_MOHAWK_HELP';
-
--- War Canoes
-UPDATE Language_en_US
-SET Text = 'Double [ICON_MOVES] Movement when moving along Rivers.'
-WHERE Tag = 'TXT_KEY_PROMOTION_WAR_CANOES_HELP';
 
 UPDATE Language_en_US
 SET Text = 'Expeditionary Warfare'

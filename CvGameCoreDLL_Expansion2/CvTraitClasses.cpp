@@ -98,6 +98,7 @@ CvTraitEntry::CvTraitEntry() :
 	m_iWLTKDGPImprovementModifier(0),
 	m_iGrowthBoon(0),
 	m_bMountainPass(false),
+	m_bWorkersMountainPass(false),
 	m_bUniqueBeliefsOnly(false),
 	m_iAllianceCSDefense(0),
 	m_iAllianceCSStrength(0),
@@ -139,7 +140,7 @@ CvTraitEntry::CvTraitEntry() :
 	m_bPermanentYieldsDecreaseEveryEra(false),
 	m_bImportsCountTowardsMonopolies(false),
 	m_bCanPurchaseNavalUnitsFaith(false),
-	m_iPuppetPenaltyReduction(0),
+	m_iPuppetYieldAndSupplyModifierChange(0),
 	m_iSharedReligionTourismModifier(0),
 	m_iExtraMissionaryStrength(0),
 	m_bCanGoldInternalTradeRoutes(false),
@@ -782,6 +783,10 @@ bool CvTraitEntry::IsMountainPass() const
 {
 	return m_bMountainPass;
 }
+bool CvTraitEntry::IsWorkersMountainPass() const
+{
+	return m_bWorkersMountainPass;
+}
 int CvTraitEntry::GetWLTKDGPImprovementModifier() const
 {
 	return m_iWLTKDGPImprovementModifier;
@@ -937,9 +942,9 @@ bool CvTraitEntry::IsCanPurchaseNavalUnitsFaith() const
 {
 	return m_bCanPurchaseNavalUnitsFaith;
 }
-int CvTraitEntry::GetPuppetPenaltyReduction() const
+int CvTraitEntry::GetPuppetYieldAndSupplyModifierChange() const
 {
-	return m_iPuppetPenaltyReduction;
+	return m_iPuppetYieldAndSupplyModifierChange;
 }
 /// Boost to tourism bonus for shared religion (same as the policy one)
 int CvTraitEntry::GetSharedReligionTourismModifier() const
@@ -2435,7 +2440,7 @@ bool CvTraitEntry::CacheResults(Database::Results& kResults, CvDatabaseUtility& 
 	m_bPermanentYieldsDecreaseEveryEra		= kResults.GetBool("PermanentYieldsDecreaseEveryEra");
 	m_bImportsCountTowardsMonopolies		= kResults.GetBool("ImportsCountTowardsMonopolies");
 	m_bCanPurchaseNavalUnitsFaith			= kResults.GetBool("CanPurchaseNavalUnitsFaith");
-	m_iPuppetPenaltyReduction				= kResults.GetInt("ReducePuppetPenalties");
+	m_iPuppetYieldAndSupplyModifierChange	= kResults.GetInt("PuppetYieldAndSupplyModifierChange");
 	m_iSharedReligionTourismModifier		= kResults.GetInt("SharedReligionTourismModifier");
 	m_iExtraMissionaryStrength				= kResults.GetInt("ExtraMissionaryStrength");
 	m_bCanGoldInternalTradeRoutes			= kResults.GetBool("CanGoldInternalTradeRoutes");
@@ -3864,7 +3869,7 @@ void CvPlayerTraits::SetIsWarmonger()
 		GetWarWearinessModifier() > 0 ||
 		GetEnemyWarWearinessModifier() > 0 ||
 		GetBullyYieldMultiplierAnnex() > 0 ||
-		(GetPuppetPenaltyReduction() > 0 && !IsNoAnnexing()) || // puppet & annexing - Warmonger, puppet & no annexing - Smaller
+		(GetPuppetYieldAndSupplyModifierChange() > 0 && !IsNoAnnexing()) || // puppet & annexing - Warmonger, puppet & no annexing - Smaller
 		GetGoldenAgeFromGreatPersonBirth(static_cast<GreatPersonTypes>(GC.getInfoTypeForString("GREATPERSON_GENERAL"))) > 0 ||
 		GetGoldenAgeFromGreatPersonBirth(static_cast<GreatPersonTypes>(GC.getInfoTypeForString("GREATPERSON_ADMIRAL"))) > 0 ||
 		GetGreatPersonGWAM(static_cast<GreatPersonTypes>(GC.getInfoTypeForString("GREATPERSON_GENERAL"))) > 0 ||
@@ -4514,7 +4519,7 @@ void CvPlayerTraits::InitPlayerTraits()
 				m_bCanPurchaseNavalUnitsFaith = true;
 			}
 
-			m_iPuppetPenaltyReduction += trait->GetPuppetPenaltyReduction();
+			m_iPuppetYieldAndSupplyModifierChange += trait->GetPuppetYieldAndSupplyModifierChange();
 			m_iTourismToGAP += trait->GetTourismToGAP();
 			m_iGoldToGAP += trait->GetGoldToGAP();
 			m_iInfluenceMeetCS += trait->GetInfluenceMeetCS();
@@ -5120,6 +5125,25 @@ void CvPlayerTraits::InitPlayerTraits()
 				{
 					m_aibUnitCombatProductionCostModifier.insert(std::make_pair(jJ, trait->GetUnitCombatProductionCostModifier(jJ)));
 				}
+				// cache if any added promos will allow WorkersMountainPass
+				if (jJ == (UnitCombatTypes)GC.getInfoTypeForString("UNITCOMBAT_WORKER", true))
+				{
+					for (int iPromotion = 0; iPromotion < GC.getNumPromotionInfos(); iPromotion++)
+	           		{
+		                PromotionTypes ePromotion = (PromotionTypes)iPromotion;
+		
+		                // Check if this trait grants this promotion to workers
+		                if (trait->IsFreePromotionUnitCombat(ePromotion, jJ))
+		                {
+		                    const CvPromotionEntry* pPromotion = GC.getPromotionInfo(ePromotion);
+		                    if (pPromotion && pPromotion->CanCrossMountains())
+		                    {
+		                        m_bWorkersMountainPass = true;
+		                        break; // found one, no need to continue
+		                    }
+		                }
+	           		}
+				}
 			}
 			int iNumUnitClasses = GC.getNumUnitClassInfos();
 			for(int jJ= 0; jJ < iNumUnitClasses; jJ++)
@@ -5312,6 +5336,7 @@ void CvPlayerTraits::Reset()
 	m_bTradeRouteOnly = false;
 	m_bKeepConqueredBuildings = false;
 	m_bMountainPass = false;
+	m_bWorkersMountainPass= false;
 	m_bUniqueBeliefsOnly = false;
 	m_bNoNaturalReligionSpread = false;
 	m_bNoOpenTrade = false;
@@ -5340,7 +5365,7 @@ void CvPlayerTraits::Reset()
 	m_bPermanentYieldsDecreaseEveryEra = false;
 	m_bImportsCountTowardsMonopolies = false;
 	m_bCanPurchaseNavalUnitsFaith = false;
-	m_iPuppetPenaltyReduction = 0;
+	m_iPuppetYieldAndSupplyModifierChange = 0;
 	m_iSharedReligionTourismModifier = 0;
 	m_iExtraMissionaryStrength = 0;
 	m_bCanGoldInternalTradeRoutes = false;
@@ -7468,6 +7493,7 @@ void CvPlayerTraits::Serialize(PlayerTraits& playerTraits, Visitor& visitor)
 	visitor(playerTraits.m_bTradeRouteOnly);
 	visitor(playerTraits.m_bKeepConqueredBuildings);
 	visitor(playerTraits.m_bMountainPass);
+	visitor(playerTraits.m_bWorkersMountainPass);
 	visitor(playerTraits.m_bUniqueBeliefsOnly);
 	visitor(playerTraits.m_bNoNaturalReligionSpread);
 	visitor(playerTraits.m_bNoOpenTrade);
@@ -7511,7 +7537,7 @@ void CvPlayerTraits::Serialize(PlayerTraits& playerTraits, Visitor& visitor)
 	visitor(playerTraits.m_bPermanentYieldsDecreaseEveryEra);
 	visitor(playerTraits.m_bImportsCountTowardsMonopolies);
 	visitor(playerTraits.m_bCanPurchaseNavalUnitsFaith);
-	visitor(playerTraits.m_iPuppetPenaltyReduction);
+	visitor(playerTraits.m_iPuppetYieldAndSupplyModifierChange);
 	visitor(playerTraits.m_iSharedReligionTourismModifier);
 	visitor(playerTraits.m_iExtraMissionaryStrength);
 	visitor(playerTraits.m_bCanGoldInternalTradeRoutes);

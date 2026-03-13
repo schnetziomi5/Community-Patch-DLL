@@ -427,6 +427,9 @@ public:
 	int GetYieldFromVictory(int i) const;
 	int* GetYieldFromVictoryArray() const;
 
+	int GetYieldFromVictoryEraScaling(int i) const;
+	int* GetYieldFromVictoryEraScalingArray() const;
+
 	int GetYieldFromVictoryGlobal(int i) const;
 	int* GetYieldFromVictoryGlobalArray() const;
 
@@ -595,6 +598,7 @@ public:
 	int GetUnitCombatProductionModifierGlobal(int i) const;
 	int GetDomainFreeExperience(int i) const;
 	int GetDomainFreeExperiencePerGreatWork(int i) const;
+	int GetDomainFreeExperiencePerGreatWorkCity(int i) const;
 	int GetDomainFreeExperiencePerGreatWorkGlobal(int i) const;
 	int GetDomainFreeExperienceGlobal(int i) const;
 	int GetDomainProductionModifier(int i) const;
@@ -1002,6 +1006,7 @@ private:
 	int m_iNeedBuildingThisCity;
 	int* m_piYieldFromDeath;
 	int* m_piYieldFromVictory;
+	int* m_piYieldFromVictoryEraScaling;
 	int* m_piYieldFromVictoryGlobal;
 	int* m_piYieldFromVictoryGlobalEraScaling;
 	int* m_piYieldFromVictoryGlobalInGoldenAge;
@@ -1069,6 +1074,7 @@ private:
 	int* m_piUnitCombatProductionModifiersGlobal;
 	int* m_piDomainFreeExperience;
 	int* m_piDomainFreeExperiencePerGreatWork;
+	int* m_piDomainFreeExperiencePerGreatWorkCity;
 	int* m_piDomainFreeExperiencePerGreatWorkGlobal;
 	std::map<int, int> m_piDomainFreeExperienceGlobal;
 	int* m_piDomainProductionModifier;

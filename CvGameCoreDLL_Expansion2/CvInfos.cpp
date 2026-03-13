@@ -8748,6 +8748,7 @@ CvEraInfo::CvEraInfo() :
 	m_iTradeRouteProductionBonusTimes100(0),
 	m_iLeaguePercent(0),
 	m_iWarmongerPercent(0),
+	m_iSpecialistExtraFoodCost(0),
 	m_bVassalageEnabled(false),
 	m_bNoGoodies(false),
 	m_bNoBarbUnits(false),
@@ -8928,6 +8929,11 @@ int CvEraInfo::getWarmongerPercent() const
 	return m_iWarmongerPercent;
 }
 //------------------------------------------------------------------------------
+int CvEraInfo::getSpecialistExtraFoodCost() const
+{
+	return m_iSpecialistExtraFoodCost;
+}
+//------------------------------------------------------------------------------
 const char* CvEraInfo::getArtPrefix() const
 {
 	return m_strArtPrefix.c_str();
@@ -9030,6 +9036,7 @@ bool CvEraInfo::CacheResults(Database::Results& kResults, CvDatabaseUtility& kUt
 	m_iTradeRouteProductionBonusTimes100 = kResults.GetInt("TradeRouteProductionBonusTimes100");
 	m_iLeaguePercent			= kResults.GetInt("LeaguePercent");
 	m_iWarmongerPercent			= kResults.GetInt("WarmongerPercent");
+	m_iSpecialistExtraFoodCost	= kResults.GetInt("SpecialistExtraFoodCost");
 	m_bVassalageEnabled			= kResults.GetBool("VassalageEnabled");
 
 	m_strCityBombardEffectTag	= kResults.GetText("CityBombardEffectTag");
@@ -9791,6 +9798,7 @@ CvModEventChoiceInfo::CvModEventChoiceInfo() :
 	 m_iCityHappinessGlobal(0),
 	 m_iFreeScaledUnits(0),
 	 m_iSpecialistsGreatPersonPointsPerTurn(0),
+	 m_iMaxAirUnitsChange(0),
 	 m_strDisabledTooltip(""),
 	 m_bVassal(false),
 	 m_bMaster(false),
@@ -9982,6 +9990,11 @@ int CvModEventChoiceInfo::getFreeScaledUnits() const
 int CvModEventChoiceInfo::getSpecialistsGreatPersonPointsPerTurn() const
 {
 	return m_iSpecialistsGreatPersonPointsPerTurn;
+}
+//------------------------------------------------------------------------------
+int CvModEventChoiceInfo::getMaxAirUnitsChange() const
+{
+	return m_iMaxAirUnitsChange;
 }
 //------------------------------------------------------------------------------
 int CvModEventChoiceInfo::getPlayerHappiness() const
@@ -10366,6 +10379,7 @@ bool CvModEventChoiceInfo::CacheResults(Database::Results& kResults, CvDatabaseU
 	m_iRandomBarbs = kResults.GetInt("RandomBarbarianSpawn");
 	m_iFreeScaledUnits = kResults.GetInt("FreeUnitsTechAppropriate");
 	m_iSpecialistsGreatPersonPointsPerTurn = kResults.GetInt("SpecialistsGreatPersonPointsPerTurn");
+	m_iMaxAirUnitsChange = kResults.GetInt("MaxAirUnitsChange");
 
 	m_iPlayerHappiness = kResults.GetInt("PlayerHappiness");
 	m_iCityHappinessGlobal = kResults.GetInt("HappinessPerCity");

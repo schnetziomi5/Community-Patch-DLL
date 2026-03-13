@@ -267,6 +267,7 @@ public:
 	bool IsAirSweepCapable() const;
 	bool IsAllowsEmbarkation() const;
 	bool IsRangeAttackIgnoreLOS() const;
+    int GetSeeThrough() const;
 	bool IsFreePillageMoves() const;
 	bool IsHealOnPillage() const;
 	bool IsHealIfDefeatExcludeBarbarians() const;
@@ -309,6 +310,7 @@ public:
 	int GetNearbyHealEnemyTerritory() const;
 	int GetNearbyHealNeutralTerritory() const;
 	int GetNearbyHealFriendlyTerritory() const;
+	int GetPassiveAoEHeal() const;
 	int GetAdjacentEnemySapMovement() const;
 	bool IsCanHeavyCharge() const;
 	bool HasPostCombatPromotions() const;
@@ -327,7 +329,7 @@ public:
 	int GetFeatureDefensePercent(int i) const;
 	int GetYieldFromAncientRuins(int i) const;
 	int GetYieldFromTRPlunder(int i) const;
-	int GetYieldFromScouting(int i) const;
+	int GetYieldFromScoutingTimes100(int i) const;
 	int GetYieldModifier(int i) const;
 	int GetYieldChange(int i) const;
 	int GetYieldFromKills(int i) const;
@@ -584,6 +586,7 @@ protected:
 	bool m_bAirSweepCapable;
 	bool m_bAllowsEmbarkation;
 	bool m_bRangeAttackIgnoreLOS;
+    int  m_iSeeThrough;
 	bool m_bFreePillageMoves;
 	bool m_bHealOnPillage;
 	bool m_bHealIfDefeatExcludesBarbarians;
@@ -631,6 +634,7 @@ protected:
 	int m_iNearbyHealFriendlyTerritory;
 	int m_iAdjacentEnemySapMovement;
 	bool m_bCanHeavyCharge;
+	int m_iPassiveAoEHeal;
 
 	CvString m_strSound;
 
@@ -641,7 +645,7 @@ protected:
 	int* m_piFeatureDefensePercent;
 	int* m_piTerrainModifierAttack;
 	int* m_piTerrainModifierDefense;
-	int* m_piYieldFromScouting;
+	int* m_piYieldFromScoutingTimes100;
 	int* m_piYieldModifier;
 	int* m_piYieldChange;
 	int* m_piYieldFromAncientRuins;

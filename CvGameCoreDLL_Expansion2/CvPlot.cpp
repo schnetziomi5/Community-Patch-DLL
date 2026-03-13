@@ -1556,7 +1556,7 @@ int CvPlot::seeThroughLevel(bool bIncludeShubbery) const
 
 	if (isMountain() && getFeatureType() == NO_FEATURE) //natural wonders are features on mountain sometimes
 	{
-		iLevel += /*2*/ GD_INT_GET(MOUNTAIN_SEE_THROUGH_CHANGE);
+		iLevel += /*2 in CP, 3 in VP*/ GD_INT_GET(MOUNTAIN_SEE_THROUGH_CHANGE);
 	}
 	else if (isHills())
 	{
@@ -2175,7 +2175,7 @@ void CvPlot::changeEspionageSight(TeamTypes eTeam, CvCity* pCity, int iRange, bo
 }
 
 //	--------------------------------------------------------------------------------
-bool CvPlot::canSeePlot(const CvPlot* pPlot, TeamTypes eTeam, int iRange, DirectionTypes eFacingDirection) const
+bool CvPlot::canSeePlot(const CvPlot* pPlot, TeamTypes eTeam, int iRange, DirectionTypes eFacingDirection, int iSeeThrough) const
 {
 	if(pPlot == NULL)
 	{
@@ -2215,7 +2215,7 @@ bool CvPlot::canSeePlot(const CvPlot* pPlot, TeamTypes eTeam, int iRange, Direct
 			}
 
 			//check if anything blocking the plot
-			if (CvTargeting::CanSeeDisplacementPlot(startX, startY, dx, dy, seeFromLevel(eTeam)))
+			if (CvTargeting::CanSeeDisplacementPlot(startX, startY, dx, dy, seeFromLevel(eTeam) + iSeeThrough))
 			{
 				return true;
 			}
@@ -2518,11 +2518,6 @@ bool CvPlot::canHaveImprovement(ImprovementTypes eImprovement, PlayerTypes ePlay
 		return false;
 	}
 
-	if (pkImprovementInfo->IsMountainsMakesValid() && isMountain())
-	{
-		return true;
-	}
-
 	if(getFeatureType() != NO_FEATURE)
 	{
 		if (pkImprovementInfo->GetCreatedFeature() != NO_FEATURE && getFeatureType() == pkImprovementInfo->GetCreatedFeature())
@@ -2535,6 +2530,11 @@ bool CvPlot::canHaveImprovement(ImprovementTypes eImprovement, PlayerTypes ePlay
 		}
 	}
 
+	if (pkImprovementInfo->IsMountainsMakesValid() && isMountain())
+	{
+		return true;
+	}
+	
 	bValid = false;
 
 	if(isCity())
@@ -2915,7 +2915,7 @@ BuildTypes CvPlot::GetBuildTypeFromImprovement(ImprovementTypes eImprovement) co
 
 
 //	--------------------------------------------------------------------------------
-bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible, bool bTestPlotOwner, bool bTestXAdjacent) const
+bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible, bool bTestPlotOwner, bool bTestXAdjacent, CvString* toolTipSink) const
 {
 	static const ImprovementTypes eFeitoria = (ImprovementTypes)GC.getInfoTypeForString("IMPROVEMENT_FEITORIA");
 	TeamTypes eTeam = ePlayer != NO_PLAYER ? GET_PLAYER(ePlayer).getTeam() : NO_TEAM;
@@ -2924,6 +2924,7 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 	ImprovementTypes eFinalImprovementType;
 	RouteTypes eRoute;
 	bool bValid = false;
+	bool bPlotCanBuild = true;
 
 	// Can't build nothing!
 	if(eBuild == NO_BUILD)
@@ -3034,14 +3035,15 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 			}
 		}
 
-		// Requirements on adjacent plots?
 		if (!bTestVisible)
 		{
+			// Requirements on adjacent plots?
 			CvImprovementEntry *pkImprovement = GC.getImprovementInfo(eImprovement);
 			bool bHasLuxuryRequirement = pkImprovement->IsAdjacentLuxury();
 			bool bHasNoAdjacencyRequirement = pkImprovement->IsNoTwoAdjacent();
 			if (pkImprovement && (bHasLuxuryRequirement || bHasNoAdjacencyRequirement))
 			{
+				bool bTwoAdjacent = false;
 				bool bLuxuryRequirementMet = !bHasLuxuryRequirement;
 				for (int iI = 0; iI < NUM_DIRECTION_TYPES; ++iI)
 				{
@@ -3060,38 +3062,51 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 								}
 							}
 						}
-						if (bHasNoAdjacencyRequirement)
+						if (bHasNoAdjacencyRequirement && !bTwoAdjacent)
 						{
-							ImprovementTypes eAdjacentImprovement =  pAdjacentPlot->getImprovementType();
+							ImprovementTypes eAdjacentImprovement = pAdjacentPlot->getImprovementType();
 							if (eAdjacentImprovement != NO_IMPROVEMENT)
 							{
 								if (eAdjacentImprovement == eImprovement)
 								{
-									return false;
+									bTwoAdjacent = true;
 								}
-								CvImprovementEntry* pkImprovement2 = GC.getImprovementInfo(eAdjacentImprovement);
-								if (pkImprovement2 && pkImprovement2->GetImprovementMakesValid(eImprovement))
+								else
 								{
-									return false;
+									CvImprovementEntry* pkImprovement2 = GC.getImprovementInfo(eAdjacentImprovement);
+									if (pkImprovement2 && pkImprovement2->GetImprovementMakesValid(eImprovement))
+										bTwoAdjacent = true;
 								}
 							}
-							int iBuildProgress = pAdjacentPlot->getBuildProgress(eBuild);
-							if (iBuildProgress > 0)
+							if (!bTwoAdjacent)
 							{
-								return false;
+								int iBuildProgress = pAdjacentPlot->getBuildProgress(eBuild);
+								if (iBuildProgress > 0)
+									bTwoAdjacent = true;
 							}
 						}
 					}
 				}
+				if (bTwoAdjacent)
+				{
+					if (toolTipSink && !toolTipSink->empty())
+						(*toolTipSink) += "[NEWLINE]";
+					GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_BUILD_BLOCKED_CANNOT_BE_ADJACENT", GC.getImprovementInfo(eImprovement)->GetDescription());
+					if (toolTipSink == NULL)
+						return false;
+					bPlotCanBuild = false;
+				}
 				if (bHasLuxuryRequirement && !bLuxuryRequirementMet)
 				{
-					return false;
+					if (toolTipSink && !toolTipSink->empty())
+						(*toolTipSink) += "[NEWLINE]";
+					GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_BUILD_BLOCKED_NO_ADJACENT_LUXURY", GC.getImprovementInfo(eImprovement)->GetDescription());
+					if (toolTipSink == NULL)
+						return false;
+					bPlotCanBuild = false;
 				}
 			}
-		}
 
-		if(!bTestVisible)
-		{
 			if(!GC.getImprovementInfo(eImprovement)->IsIgnoreOwnership())
 			{
 				// Gifts for minors can ignore borders requirements
@@ -3102,7 +3117,11 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 					{
 						if (getTeam() != eTeam && getTeam() != NO_TEAM)
 						{
-							return false;
+							if (toolTipSink && !toolTipSink->empty())
+								(*toolTipSink) += "[NEWLINE]";
+							GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_BUILD_BLOCKED_OUTSIDE_TERRITORY", GC.getImprovementInfo(eImprovement)->GetDescription());
+							if (toolTipSink == NULL) return false;
+							bPlotCanBuild = false;
 						}
 					}
 					// In Adjacent Friendly - Can be built in or adjacent to our lands
@@ -3112,17 +3131,30 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 						if (getTeam() == NO_TEAM)
 						{
 							if (!isAdjacentTeam(eTeam, false))
-								return false;
+							{
+								if (toolTipSink && !toolTipSink->empty())
+									(*toolTipSink) += "[NEWLINE]";
+								GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_BUILD_BLOCKED_NOT_IN_ADJACENT_TERRITORY", GC.getImprovementInfo(eImprovement)->GetDescription());
+								if (toolTipSink == NULL) return false;
+								bPlotCanBuild = false;
+							}
 						}
 						else if (getTeam() != eTeam)
 						{
+							bool bBlocked = true;
 							if (GC.getImprovementInfo(eImprovement)->GetCultureBombRadius() > 0 && GET_PLAYER(ePlayer).IsCultureBombForeignTerritory())
 							{
-								if (IsStealBlockedByImprovement() || !isAdjacentTeam(eTeam, false))
-									return false;
+								if (!IsStealBlockedByImprovement() && isAdjacentTeam(eTeam, false))
+									bBlocked = false;
 							}
-							else
-								return false;
+							if (bBlocked)
+							{
+								if (toolTipSink && !toolTipSink->empty())
+									(*toolTipSink) += "[NEWLINE]";
+								GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_BUILD_BLOCKED_NOT_IN_ADJACENT_TERRITORY", GC.getImprovementInfo(eImprovement)->GetDescription());
+								if (toolTipSink == NULL) return false;
+								bPlotCanBuild = false;
+							}
 						}
 					}
 					// Only City State Territory - Can only be built in City-State territory (not our own lands)
@@ -3145,11 +3177,21 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 							}
 						}
 						else
-							return false;
+						{
+							if (toolTipSink && !toolTipSink->empty())
+								(*toolTipSink) += "[NEWLINE]";
+							GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_BUILD_BLOCKED_NOT_IN_CITY_STATE_TERRITORY", GC.getImprovementInfo(eImprovement)->GetDescription());
+							if (toolTipSink == NULL) return false;
+							bPlotCanBuild = false;
+						}
 					}
-					else if(getTeam() != eTeam) 
+					else if(getTeam() != eTeam)
 					{//only buildable in own culture
-						return false;
+						if (toolTipSink && !toolTipSink->empty())
+							(*toolTipSink) += "[NEWLINE]";
+						GC.getGame().BuildCannotPerformActionHelpText(toolTipSink, "TXT_KEY_BUILD_BLOCKED_OUTSIDE_TERRITORY", GC.getImprovementInfo(eImprovement)->GetDescription());
+						if (toolTipSink == NULL) return false;
+						bPlotCanBuild = false;
 					}
 				}
 			}
@@ -3230,7 +3272,7 @@ bool CvPlot::canBuild(BuildTypes eBuild, PlayerTypes ePlayer, bool bTestVisible,
 		}
 	}
 
-	return bValid;
+	return bValid && bPlotCanBuild;
 }
 
 
@@ -3485,8 +3527,8 @@ CvUnit* CvPlot::getBestGarrison(PlayerTypes eOwner) const
 	CvUnit* pLoopUnit = NULL;
 	CvUnit* pBestUnit = NULL;
 
-	//we don't consider promotions here ...
-	int iBestBaseCS = -1;
+	// Score candidates by their effective city-strength contribution (same logic as CvCity::updateStrengthValue)
+	int iBestGarrisonContribution = 0;
 	while(pUnitNode != NULL)
 	{
 		pLoopUnit = GetPlayerUnit(*pUnitNode);
@@ -3495,14 +3537,13 @@ CvUnit* CvPlot::getBestGarrison(PlayerTypes eOwner) const
 		if(pLoopUnit && (pLoopUnit->getOwner() == eOwner) && pLoopUnit->CanGarrison() && !pLoopUnit->isDelayedDeath())
 		{
 			int iBaseCS = max(pLoopUnit->GetBaseCombatStrength(),pLoopUnit->GetBaseRangedCombatStrength());
-			//naval units are not the best garrison
-			if (!pLoopUnit->isNativeDomain(this))
-				iBaseCS = 0;
+			int iContribution = (iBaseCS * 100) /
+				(pLoopUnit->getDomainType() == DOMAIN_LAND ? GD_INT_GET(CITY_STRENGTH_LAND_UNIT_DIVISOR) : GD_INT_GET(CITY_STRENGTH_NAVAL_UNIT_DIVISOR));
 
-			if(iBaseCS>iBestBaseCS)
+			if(iContribution > iBestGarrisonContribution)
 			{
 				pBestUnit = pLoopUnit;
-				iBestBaseCS = iBaseCS;
+				iBestGarrisonContribution = iContribution;
 			}
 		}
 	}
@@ -7472,16 +7513,19 @@ void CvPlot::setTerrainType(TerrainTypes eNewValue, bool bRecalculate, bool bReb
 //	--------------------------------------------------------------------------------
 void CvPlot::setFeatureType(FeatureTypes eNewValue)
 {
-	FeatureTypes eOldFeature;
+	ASSERT(eNewValue >= NO_FEATURE && eNewValue < GC.getNumFeatureInfos(), "Invalid index for new feature");
+
+	FeatureTypes eOldFeature = getFeatureType();
 	bool bUpdateSight = false;
 
-	if (eNewValue < NO_FEATURE) return;
-	if (eNewValue > NO_FEATURE && GC.getFeatureInfo(eNewValue) == NULL) return;
-
-	eOldFeature = getFeatureType();
-
-	if(eOldFeature != eNewValue)
+	if (eOldFeature != eNewValue)
 	{
+		// Force flood plains on river desert if it becomes featureless
+		if (eNewValue == NO_FEATURE && getTerrainType() == TERRAIN_DESERT && isRiver())
+		{
+			eNewValue = FEATURE_FLOOD_PLAINS;
+		}
+
 		bUpdateSight = (eOldFeature == NO_FEATURE) ||
 		        (eNewValue == NO_FEATURE) ||
 		        (GC.getFeatureInfo(eOldFeature)->getSeeThroughChange() != GC.getFeatureInfo(eNewValue)->getSeeThroughChange());
@@ -8305,6 +8349,17 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 				}
 			}
 
+			// if the improvement has yield changes by era, it needs the historical record set. 
+			// in the rare case there is also an invisible artifact record on the tile, its age is altered (player has no way to know this)
+			for (int iK = 0; iK < NUM_YIELD_TYPES; ++iK)
+			{
+				if (newImprovementEntry.GetYieldChangePerEra(iK) != 0)
+				{
+					m_kArchaeologyData.m_eEra = GET_PLAYER(eBuilder).GetCurrentEra();
+					break;
+				}
+			}
+			
 			// remove existing resource if this improvement places a new one (needs to be done before setting the improvement to make sure resource counts are updated correctly)
 			ResourceTypes eResourceFromImprovement = (ResourceTypes)newImprovementEntry.GetResourceFromImprovement();
 			if (eResourceFromImprovement != NO_RESOURCE && getResourceType() != NO_RESOURCE)
@@ -8312,7 +8367,7 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 				setResourceType(NO_RESOURCE, 0);
 			}
 
-			// update plot ownership (needs ot be done before setting the improvement)
+			// update plot ownership (needs to be done before setting the improvement)
 			if (eBuilder != NO_PLAYER)
 			{
 				if (!isOwned() && newImprovementEntry.IsNewOwner())
@@ -8685,6 +8740,21 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 					bResourcesOnPlotChanged = true;
 				}
 
+				bool bIsExoticResource = newImprovementEntry.IsExoticResourceFromImprovement();
+				if (bIsExoticResource && eBuilder != NO_PLAYER)
+				{
+					int iQuantity = newImprovementEntry.GetResourceQuantityFromImprovement() + GET_PLAYER(eBuilder).GetAdmiralLuxuryBonus();
+					if (iQuantity > 0)  // allow it to be zero and only positive with the policy buff. unused but maybe useful
+					{
+						ResourceTypes eExoticResource = GET_PLAYER(eBuilder).GetFreeLuxury();
+						if (eExoticResource != NO_RESOURCE)
+						{
+							setResourceType(eExoticResource, iQuantity, true);
+							bResourcesOnPlotChanged = true;
+						}
+					}
+				}
+				
 				// if the resources on the plot have changed, resource quantities have already been updated in setResourceType. otherwise, we do it now
 				if (!bResourcesOnPlotChanged)
 				{
@@ -8832,6 +8902,16 @@ void CvPlot::setImprovementType(ImprovementTypes eNewValue, PlayerTypes eBuilder
 				if (eResourceFromImprovement != NO_RESOURCE)
 				{
 					if (getResourceType() != NO_RESOURCE && getResourceType() == eResourceFromImprovement)
+					{
+						setResourceType(NO_RESOURCE, 0);
+					}
+				}
+
+				if (GC.getImprovementInfo(eOldImprovement)->IsExoticResourceFromImprovement())
+				{
+					// if for some reason this doesnt place resources, then dont remove resources. unlikely to fire, but we do allow it to be zero = inactive
+					int iQuantity = GC.getImprovementInfo(eOldImprovement)->GetResourceQuantityFromImprovement() + GET_PLAYER(eBuilder).GetAdmiralLuxuryBonus();
+					if (getResourceType() != NO_RESOURCE && iQuantity > 0)
 					{
 						setResourceType(NO_RESOURCE, 0);
 					}
@@ -12179,7 +12259,7 @@ bool CvPlot::setRevealed(TeamTypes eTeam, bool bNewValue, CvUnit* pUnit, bool bT
 
 		if(bNewValue)
 		{
-			if (pUnit && (pUnit->IsGainsXPFromScouting() || pUnit->IsGainsYieldFromScouting()) && !GET_TEAM(eTeam).isBarbarian() && !GET_TEAM(eTeam).isMinorCiv())
+			if (pUnit && (pUnit->IsGainsXPFromScouting() || pUnit->IsGainsYieldFromScoutingTimes100()) && !GET_TEAM(eTeam).isBarbarian() && !GET_TEAM(eTeam).isMinorCiv())
 			{
 				if (IsNaturalWonder())
 				{
@@ -14423,6 +14503,10 @@ int CvPlot::Validate(CvMap& kParentMap)
 /// Some reason we don't need to pay maintenance here?
 bool CvPlot::MustPayMaintenanceHere(PlayerTypes ePlayer) const
 {
+	// can now build roads on mountains also. these are also free
+	if (MOD_BALANCE_VP)
+		return !static_cast<bool>((isHills() || isMountain()) && GET_PLAYER(ePlayer).GetPlayerTraits()->IsNoHillsImprovementMaintenance());
+	
 	return !static_cast<bool>(isHills() && GET_PLAYER(ePlayer).GetPlayerTraits()->IsNoHillsImprovementMaintenance());
 }
 
@@ -14457,7 +14541,12 @@ void CvPlot::AddArchaeologicalRecord(GreatWorkArtifactClass eType, PlayerTypes e
 	if (ePlayer1 == NO_PLAYER)
 		return;
 
-	AddArchaeologicalRecord(eType, GET_PLAYER(ePlayer1).GetCurrentEra(), ePlayer1, ePlayer2, bIgnoreNormalRestrictions);
+	// if an improvement has set an era already, dont change it
+	EraTypes eNewEra = m_kArchaeologyData.m_eEra;
+	if (eNewEra == NO_ERA)
+		eNewEra = GET_PLAYER(ePlayer1).GetCurrentEra();
+
+	AddArchaeologicalRecord(eType, eNewEra, ePlayer1, ePlayer2, bIgnoreNormalRestrictions);
 }
 
 //	---------------------------------------------------------------------------
@@ -14743,11 +14832,11 @@ bool CvPlot::isImpassable(TeamTypes eTeam) const
 // result is a simplified version of canMoveInto. since we don't know the particular of the unit, we are more restrictive here
 bool CvPlot::isValidMovePlot(PlayerTypes ePlayer, bool bCheckTerritory) const
 {
-	if ( getRouteType()!=NO_ROUTE && !IsRoutePillaged() && (!isCity() || getOwner()==ePlayer) ) //if it's a city, it needs to be our city
-		return true;
-
-	if (ePlayer==NO_PLAYER)
-		return !m_bIsImpassable;
+	if (ePlayer == NO_PLAYER)
+	{
+		//routes override terrain impassability
+		return (!m_bIsImpassable && !isIce()) || (getRouteType() != NO_ROUTE && !IsRoutePillaged());
+	}
 	else
 	{
 		TeamTypes eTeam = GET_PLAYER(ePlayer).getTeam();
@@ -14766,6 +14855,9 @@ bool CvPlot::isValidMovePlot(PlayerTypes ePlayer, bool bCheckTerritory) const
 				bCanPassBecauseOfPlayerTrait = true;
 			//and shallow water... (this is necessary because of scenarios and tech situations where units can embark before techs, and vice-versa.
 			if (isShallowWater() && GET_PLAYER(ePlayer).CanEmbark())
+				bCanPassBecauseOfPlayerTrait = true;
+			//routes override terrain impassability, except for foreign cities
+			if (getRouteType() != NO_ROUTE && !IsRoutePillaged() && (!isCity() || getOwner() == ePlayer))
 				bCanPassBecauseOfPlayerTrait = true;
 
 			if (!bCanPassBecauseOfPlayerTrait)

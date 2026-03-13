@@ -235,7 +235,7 @@ DELETE FROM Helper;
 
 -- Shrine
 UPDATE Buildings
-SET 
+SET
 	PrereqTech = 'TECH_AGRICULTURE',
 	GreatWorkSlotType = 'GREAT_WORK_SLOT_MUSIC',
 	GreatWorkCount = 1
@@ -320,7 +320,7 @@ WHERE BuildingClass = 'BUILDINGCLASS_AQUEDUCT';
 INSERT INTO Building_GrowthExtraYield
 	(BuildingType, YieldType, Yield)
 SELECT
-	Type, 'YIELD_PRODUCTION', 25
+	Type, 'YIELD_PRODUCTION', 60
 FROM Buildings
 WHERE BuildingClass = 'BUILDINGCLASS_AQUEDUCT';
 
@@ -1252,10 +1252,17 @@ SELECT
 FROM Buildings
 WHERE BuildingClass = 'BUILDINGCLASS_CHANCERY';
 
+INSERT INTO Building_YieldPerFriendTimes100
+	(BuildingType, YieldType, Yield)
+SELECT
+	Type, 'YIELD_PRODUCTION', 50
+FROM Buildings
+WHERE BuildingClass = 'BUILDINGCLASS_CHANCERY';
+
 INSERT INTO Building_YieldPerAllyTimes100
 	(BuildingType, YieldType, Yield)
 SELECT
-	Type, 'YIELD_PRODUCTION', 200
+	Type, 'YIELD_PRODUCTION', 100
 FROM Buildings
 WHERE BuildingClass = 'BUILDINGCLASS_CHANCERY';
 
@@ -1687,7 +1694,7 @@ FROM Buildings
 WHERE BuildingClass = 'BUILDINGCLASS_STABLE';
 
 UPDATE Building_UnitCombatProductionModifiers
-SET Modifier = 33
+SET Modifier = 20
 WHERE BuildingType IN (
 	SELECT Type FROM Buildings
 	WHERE BuildingClass = 'BUILDINGCLASS_STABLE'
@@ -1708,6 +1715,21 @@ FROM Buildings a, Helper b
 WHERE a.BuildingClass = 'BUILDINGCLASS_STABLE';
 
 DELETE FROM Helper;
+
+-- Observatory
+UPDATE Buildings SET Mountain = 0 WHERE Type = 'BUILDING_OBSERVATORY';
+
+INSERT INTO Building_YieldChanges
+	(BuildingType, YieldType, Yield)
+SELECT
+	Type, 'YIELD_SCIENCE', 4
+FROM Buildings
+WHERE BuildingClass = 'BUILDINGCLASS_OBSERVATORY';
+
+INSERT INTO Building_YieldPerXTerrainTimes100
+	(BuildingType, TerrainType, YieldType, Yield)
+VALUES
+	('BUILDING_OBSERVATORY', 'TERRAIN_MOUNTAIN', 'YIELD_SCIENCE', 100);
 
 -- Windmill
 UPDATE Buildings
@@ -1820,6 +1842,44 @@ FROM Buildings a, Helper b
 WHERE a.BuildingClass = 'BUILDINGCLASS_COALING_STATION';
 
 DELETE FROM Helper;
+
+-- Shopping Mall
+
+INSERT INTO Helper
+	(YieldType, Yield)
+VALUES
+	('YIELD_GOLD', 2),
+	('YIELD_TOURISM', 3);
+
+INSERT INTO Building_YieldChanges
+	(BuildingType, YieldType, Yield)
+SELECT
+	a.Type, b.YieldType, b.Yield
+FROM Buildings a, Helper b
+WHERE a.BuildingClass = 'BUILDINGCLASS_SHOPPING_MALL';
+
+DELETE FROM Helper;
+
+INSERT INTO Building_YieldFromPurchase
+	(BuildingType, YieldType, Yield)
+SELECT
+	Type, 'YIELD_TOURISM', 5
+FROM Buildings
+WHERE BuildingClass = 'BUILDINGCLASS_SHOPPING_MALL';
+
+INSERT INTO Building_BuildingClassLocalYieldChanges
+	(BuildingType, BuildingClassType, YieldType, YieldChange)
+SELECT
+	b.Type, c.FranchiseBuildingClass, 'YIELD_GOLD', 4
+FROM Buildings b, Corporations c
+WHERE b.BuildingClass = 'BUILDINGCLASS_SHOPPING_MALL';
+
+INSERT INTO Building_BuildingClassLocalYieldChanges
+	(BuildingType, BuildingClassType, YieldType, YieldChange)
+SELECT
+	b.Type, c.FranchiseBuildingClass, 'YIELD_CULTURE', 2
+FROM Buildings b, Corporations c
+WHERE b.BuildingClass = 'BUILDINGCLASS_SHOPPING_MALL';
 
 -- Refinery
 INSERT INTO Building_YieldChanges
