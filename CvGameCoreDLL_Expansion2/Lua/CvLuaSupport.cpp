@@ -67,6 +67,7 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 	CvLuaUnit::PushTypeTable(L);
 	CvLuaTeamTech::PushTypeTable(L);
 
+	/*
 	//-----------------------------------------
 	// Restore access to some core lua functionality hidden away by Fireaxis, but still keep the sandbox intact
 	// Use lua_dostring(), because it's more comfortable to code and easier to see what's happening
@@ -102,7 +103,16 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 	luaL_dostring(L,luacommand);
 
 	//------------------------------------------
+	*/
 
+}
+
+void LuaSupport::InitLuaFramework()
+{
+	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
+	lua_State* L = pkScriptSystem->CreateLuaThread("VP_TMP");
+	pkScriptSystem->LoadFile(L, "VP_LuaFramework.lua");
+	pkScriptSystem->FreeLuaThread(L);
 }
 
 //------------------------------------------------------------------------------
