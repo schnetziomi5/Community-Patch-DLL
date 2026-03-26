@@ -93,7 +93,7 @@ void LuaSupport::InitLuaFramework()
 
 	const char* luaCommand = ""
 
-"local G = REGISTRY.G ;\n"
+"local G = REGISTRY._LOADED._G ;\n"
 "local Threads = G.Threads ;\n"
 "local IncludeFileList = G.IncludeFileList ;\n"
 "local newproxy = G.newproxy ;\n"
