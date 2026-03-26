@@ -27,6 +27,9 @@
 #include "CvLuaPlot.h"
 #include "CvLuaUnit.h"
 #include "CvLuaTeamTech.h"
+#include "CvLuaDeal.h"
+#include "CvLuaArea.h"
+#include "CvLuaLeague.h"
 
 #pragma warning(disable:4800 ) //forcing value to bool 'true' or 'false'
 
@@ -68,7 +71,7 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 	lua_setglobal(L,"Team");
 	lua_getfield(L,-1,"Player");
 	lua_setglobal(L,"Player");
-	lua_pop();
+	lua_pop(L,1);
 
 	//Register additional lua types, for which instances will only be created on demand
 	CvLuaCity::PushTypeTable(L);
