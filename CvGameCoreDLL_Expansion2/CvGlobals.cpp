@@ -2648,7 +2648,7 @@ void CreateMiniDump(EXCEPTION_POINTERS* pep)
 
 	// Generate dump filename with version, commit hash and build type
 	TCHAR szDumpFilename[MAX_PATH];
-	_stprintf_s(szDumpFilename, MAX_PATH, _T("CvMiniDump_%s_%hs_%s.dmp"),
+	_stprintf_s(szDumpFilename, MAX_PATH, _T("crashlogs\\CvMiniDump_%s_%hs_%s.dmp"),
 		szTimestamp,
 		shortVersion,
 #ifdef VPDEBUG
@@ -2793,90 +2793,120 @@ static const char* GetExceptionDescription(DWORD exceptionCode)
 	}
 }
 
+void findModuleInfo( void* address, char* ret_name, size_t ret_len, void** ret_baseaddr )
+{
+	HMODULE hModule= NULL;
+	if (GetModuleHandleExA(
+			GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+			(LPCSTR)address, &hModule)
+	){
+		char szFullPath[MAX_PATH] = {};
+		if (GetModuleFileNameA(hModule, szFullPath, sizeof(szFullPath)))
+		{
+			const char* pFile = strrchr(szFullPath, '\\');
+			_snprintf_s(ret_name, ret_len, _TRUNCATE, "%s", pFile ? pFile + 1 : szFullPath);
+		}
+		if( ret_baseaddr != NULL )
+		{
+			*ret_baseaddr = (void*)hModule ;
+		}
+	}
+}
+
 LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 {
 #if defined(MOD_DEBUG_MINIDUMP)
 	CreateMiniDump(ExceptionInfo);
 #endif
 
-	// Show crash dialog to user
-	char szMessage[2048];
 	DWORD exceptionCode = ExceptionInfo ? ExceptionInfo->ExceptionRecord->ExceptionCode : 0;
 	void* exceptionAddress = ExceptionInfo ? ExceptionInfo->ExceptionRecord->ExceptionAddress : NULL;
+	DWORD exceptionAddressAdjusted = (DWORD)exceptionAddress ;
 
-	// Determine which module the crash address belongs to
-	char szCrashModule[MAX_PATH] = "unknown module";
-	if (exceptionAddress != NULL)
+	char szCrashModule[MAX_PATH] = "???" ;
+	if( exceptionAddress != NULL )
 	{
-		HMODULE hCrashModule = NULL;
-		if (GetModuleHandleExA(
-				GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-				(LPCSTR)exceptionAddress, &hCrashModule))
-		{
-			char szFullPath[MAX_PATH] = {};
-			if (GetModuleFileNameA(hCrashModule, szFullPath, sizeof(szFullPath)))
-			{
-				const char* pFile = strrchr(szFullPath, '\\');
-				_snprintf_s(szCrashModule, sizeof(szCrashModule), _TRUNCATE, "%s", pFile ? pFile + 1 : szFullPath);
-			}
-		}
+		findModuleInfo( exceptionAddress, szCrashModule, MAX_PATH, &((void*)exceptionAddressAdjusted) ) ;
+		exceptionAddressAdjusted = (DWORD)exceptionAddress - exceptionAddressAdjusted ;
 	}
 
-	char szDumpLine[MAX_PATH + 16] = "";
+	char szExeName[MAX_PATH] = "???" ;
+	findModuleInfo( NULL, szExeName, MAX_PATH, NULL ) ;
+
+	char szCrashInfo[1024];
+	_snprintf_s(szCrashInfo, _countof(szCrashInfo), _TRUNCATE, 
+		"--Crash details--\n"
+		"exception: 0x%08x (%s)\n"
+		"location: %s+0x%08x\n"
+		"file loc: 0x%08x\n"
+		"dump: %s\n"
+		"os: %s\n"
+		"dll-version: %s\n"
+		"exe: %s\n",
+
+		exceptionCode, GetExceptionDescription(exceptionCode),
+		szCrashModule,exceptionAddressFileAdjusted,
+		exceptionAddressFileAdjusted-0xC00,
 #if defined(MOD_DEBUG_MINIDUMP)
-	if (g_szLastMiniDumpPath[0] != '\0')
-		_snprintf_s(szDumpLine, sizeof(szDumpLine), _TRUNCATE, "Minidump: %s\n", g_szLastMiniDumpPath);
+		g_szLastMiniDumpPath[0] == "\0" ? "minidump creation failed?" : g_szLastMiniDumpPath ,
+#else
+		"dll was built without minidump creation!",
 #endif
+		"??",//szOperatingSystemDescription,
+		CURRENT_GAMECORE_VERSION,
+		szExeName
+	)
+
+	// Show crash dialog to user
+	char szMessage[2048];
+	char* szBaseMsg ;
 
 	bool bFromDLL = (_stricmp(szCrashModule, "CvGameCore_Expansion2.dll") == 0);
 	if (bFromDLL)
 	{
-		_snprintf_s(szMessage, _countof(szMessage), _TRUNCATE,
-			"The game has crashed due to a code error. Please report the issue at https://github.com/LoneGazebo/Community-Patch-DLL/issues so it can be fixed.\n\n"
-			"Please provide the VP version number, the list of other mods in use, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n\n"
-			"==================\n"
-			"Crash details:\n"
-			"Exception: %s (0x%08X)\n"
-			"Address: 0x%p (%s)\n"
-			"%s",
-			GetExceptionDescription(exceptionCode),
-			exceptionCode,
-			exceptionAddress,
-			szCrashModule,
-			szDumpLine);
+		szBaseMsg = ""
+			"The game has crashed due to a code error. Please report the issue at https://github.com/LoneGazebo/Community-Patch-DLL/issues so it can be fixed.\n"
+			"\n"
+			"Please provide the VP version number, the list of other mods in use, the minidump if one one was created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
+			"Minidumps and crashes.log are located in the folder 'crashlogs' in the civ5 installation directory\n"
+			"\n"
+			"%s" ;
 	}
 	else
 	{
-		_snprintf_s(szMessage, _countof(szMessage), _TRUNCATE,
-			"The game has crashed, likely due to insufficient memory. Common strategies to reduce the game's memory consumption include:\n\n"
+		szBaseMsg = ""
+			"The game has crashed for an unknown reason. If you see this popup repeatedly please create report at https://github.com/LoneGazebo/Community-Patch-DLL/issues.\n"
+			"\n"
+			"If you create a report, please provide the VP version number, the list of other mods in use, any minidumps created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
+			"Minidumps and crashes.log are located in the folder 'crashlogs' in the civ5 installation directory\n"
+			"\n"
+			"Civ5 is a 32bit program. This limits the amount of memory available to the process and can potentially cause crashes. Common strategies to reduce memory consumption are:\n"
 			"- Disable yield icons\n"
 			"- Reduce Leader Screen Quality to Minimum\n"
 			"- Avoid zooming out too far\n"
 			"- Switch to Strategic View\n"
 			"- Disable memory-heavy mods such as InfoAddict\n"
 			"- Enable Single-Unit Graphics using the mod 'Unit Scaling and Formation for VP'\n"
-			"- If playing with EUI: Use the Non-EUI Version of Vox Populi (Reinstallation necessary, save games are compatible)\n\n"
-			"==================\n"
-			"Crash details:\n"
-			"Exception: %s (0x%08X)\n"
-			"Address: 0x%p (%s)\n",
-			GetExceptionDescription(exceptionCode),
-			exceptionCode,
-			exceptionAddress,
-			szCrashModule);
+			"- If playing with EUI: Use the Non-EUI Version of Vox Populi (Reinstallation necessary, save games are compatible)\n"
+			"\n"
+			"%s";
 	}
+
+	_snprintf_s( szMessage, _countof(szMessage), _TRUNCATE, szBaseMsg, szCrashInfo);
 
 	if (!g_bPreconditionFired)
 		MessageBoxA(NULL, szMessage, "Game Crash", MB_OK | MB_ICONERROR | MB_SYSTEMMODAL);
 
 	return EXCEPTION_EXECUTE_HANDLER;
 }
+#endif // WIN32
 
 //
 // allocate
 //
 void CvGlobals::init()
 {
+#ifdef WIN32
 	SetUnhandledExceptionFilter(CustomFilter);
 #if defined(MOD_DEBUG_MINIDUMP)
 #ifdef VPDEBUG
@@ -3054,7 +3084,7 @@ void CvGlobals::init()
 	m_interfacePathFinder = new CvTwoLayerPathFinder();
 	m_stepFinder = new CvStepFinder();
 }
-
+#pragma region NON_DEBUG_STUFF
 //
 // free
 //
@@ -7919,3 +7949,4 @@ bool CvGlobals::getOutOfSyncDebuggingEnabled() const
 {
 	return m_bOutOfSyncDebuggingEnabled;
 }
+#pragma endregion NON_DEBUG_STUFF
