@@ -2826,7 +2826,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	char szCrashModule[MAX_PATH] = "???" ;
 	if( exceptionAddress != NULL )
 	{
-		findModuleInfo( exceptionAddress, szCrashModule, MAX_PATH, &((void*)exceptionAddressAdjusted) ) ;
+		findModuleInfo( exceptionAddress, szCrashModule, MAX_PATH, (void**)(&exceptionAddressAdjusted) ) ;
 		exceptionAddressAdjusted = (DWORD)exceptionAddress - exceptionAddressAdjusted ;
 	}
 
@@ -2845,17 +2845,17 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		"exe: %s\n",
 
 		exceptionCode, GetExceptionDescription(exceptionCode),
-		szCrashModule,exceptionAddressFileAdjusted,
-		exceptionAddressFileAdjusted-0xC00,
+		szCrashModule,exceptionAddressAdjusted,
+		exceptionAddressAdjusted-0xC00,
 #if defined(MOD_DEBUG_MINIDUMP)
-		g_szLastMiniDumpPath[0] == "\0" ? "minidump creation failed?" : g_szLastMiniDumpPath ,
+		((g_szLastMiniDumpPath[0] != '\0') ? g_szLastMiniDumpPath : "minidump creation failed?") ,
 #else
 		"dll was built without minidump creation!",
 #endif
 		"??",//szOperatingSystemDescription,
 		CURRENT_GAMECORE_VERSION,
 		szExeName
-	)
+	);
 
 	// Show crash dialog to user
 	char szMessage[2048];
