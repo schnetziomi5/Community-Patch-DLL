@@ -2793,7 +2793,7 @@ static const char* GetExceptionDescription(DWORD exceptionCode)
 	}
 }
 
-void findModuleInfo( void* address, char* ret_name, size_t ret_len, void** ret_baseaddr )
+static void findModuleInfo( void* address, char* ret_name, size_t ret_len, void** ret_baseaddr )
 {
 	HMODULE hModule= NULL;
 	if (GetModuleHandleExA(
