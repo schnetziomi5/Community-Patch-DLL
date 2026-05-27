@@ -2793,7 +2793,7 @@ static const char* GetExceptionDescription(DWORD exceptionCode)
 	}
 }
 
-static void findModuleInfo( void* address, char* ret_name, size_t ret_len, void** ret_baseaddr )
+static void findModuleInfo( void* address, char* ret_name, size_t ret_len, DWORD* ret_baseaddr )
 {
 	HMODULE hModule= NULL;
 	if (GetModuleHandleExA(
@@ -2808,7 +2808,7 @@ static void findModuleInfo( void* address, char* ret_name, size_t ret_len, void*
 		}
 		if( ret_baseaddr != NULL )
 		{
-			*ret_baseaddr = (void*)hModule ;
+			*ret_baseaddr = (DWORD)hModule ;
 		}
 	}
 }
@@ -2826,7 +2826,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	char szCrashModule[MAX_PATH] = "???" ;
 	if( exceptionAddress != NULL )
 	{
-		findModuleInfo( exceptionAddress, szCrashModule, MAX_PATH, (void**)(&exceptionAddressAdjusted) ) ;
+		findModuleInfo( exceptionAddress, szCrashModule, MAX_PATH, &exceptionAddressAdjusted ) ;
 		exceptionAddressAdjusted = (DWORD)exceptionAddress - exceptionAddressAdjusted ;
 	}
 
