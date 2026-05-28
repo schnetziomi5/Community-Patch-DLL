@@ -2823,11 +2823,10 @@ static void GetOsDescription( char* out, size_t len )
 		else
 		{
 			// Get OS version information
-			OSVERSIONINFOEX osvi;
-			ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+			OSVERSIONINFOEX osvi = {0};
 			osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 			GetVersionEx((LPOSVERSIONINFO)&osvi);
-			_snprintf_s( out, len, _TRUNCATE, "Native Windows %d.%d (Build %d)"
+			_snprintf_s( out, len, _TRUNCATE, "Native Windows %d.%d (Build %d)",
 				osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber
 			) ;
 		}
@@ -2872,6 +2871,10 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	char szOsInfo[512] ;
 	GetOsDescription( szOsInfo, _countof(szOsInfo) ) ;
 
+	//retrieve memory usage
+	PROCESS_MEMORY_COUNTERS pmcMemInfo = {0} ;
+	GetProcessMemoryInfo( GetCurrentProcess(), &pmcMemInfo, sizeof(pmcMemInfo) ) ;
+
 	char szExeName[MAX_PATH] = "???" ;
 	GetModuleFileNameA( NULL, szExeName, MAX_PATH) ;
 
@@ -2883,6 +2886,8 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		"Location (live memory): 0x%08x+0x%08x\n"
 		"Minidump: %s\n"
 		"OS Info: %s\n"
+		"Memory usage: %d\n"
+		"Memory peak: %d\n"
 		"DLL-Version: %s\n"
 #ifdef VPDEBUG
 		"Configuration: DEBUG\n"
@@ -2900,6 +2905,8 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		"DLL was built without minidump support!",
 #endif
 		szOsInfo,
+		pmcMemInfo.WorkingSetSize,
+		pmcMemInfo.PeakWorkingSetSize,
 		CURRENT_GAMECORE_VERSION,
 		szExeName
 	);
