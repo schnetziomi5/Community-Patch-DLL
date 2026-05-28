@@ -2801,6 +2801,7 @@ static const char* GetOnlyFilename( const char* in )
 
 LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 {
+	CreateDirectory(_T("crashlogs"));
 #if defined(MOD_DEBUG_MINIDUMP)
 	CreateMiniDump(ExceptionInfo);
 #endif
@@ -2838,7 +2839,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 #else
 		"Configuration: RELEASE\n"
 #endif
-		"Installation directory and .exe: %s\n",
+		"Installation directory and .exe: %s\n\n",
 
 		exceptionCode, GetExceptionDescription(exceptionCode),
 		GetOnlyFilename(szCrashModule),exceptionAddressAdjusted-0xC00,
@@ -2851,6 +2852,13 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		CURRENT_GAMECORE_VERSION,
 		szExeName
 	);
+
+	HANDLE hCrashlogs = CreateFile(_T("crashlogs\\crashes.log"), FILE_APPEND_DATA, 0, NULL, OPEN_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+	if( hCrashlogs != INVALID_HANDLE_VALUE )
+	{
+		WriteFile(hCrashlogs, szCrashInfo, strlen(szCrashInfo), NULL, NULL);
+		CloseHandle(hCrashlogs);
+	}
 
 	// Show crash dialog to user
 	char szMessage[2048];
