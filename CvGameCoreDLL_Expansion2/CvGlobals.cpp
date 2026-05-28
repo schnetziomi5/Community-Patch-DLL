@@ -31,6 +31,7 @@
 #include "CvReplayInfo.h"
 #include "CvTypes.h"
 #include "FCrc32.h"
+#include "psapi.h"
 
 #include "CvDllDatabaseUtility.h"
 #include "CvDllScriptSystemUtility.h"
