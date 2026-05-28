@@ -2882,6 +2882,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		"Location (in file): %s+0x%08x\n"
 		"Location (live memory): 0x%08x+0x%08x\n"
 		"Minidump: %s\n"
+		"OS Info: %s\n"
 		"DLL-Version: %s\n"
 #ifdef VPDEBUG
 		"Configuration: DEBUG\n"
@@ -2898,6 +2899,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 #else
 		"DLL was built without minidump support!",
 #endif
+		szOsInfo,
 		CURRENT_GAMECORE_VERSION,
 		szExeName
 	);
