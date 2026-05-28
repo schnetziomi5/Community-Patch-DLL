@@ -2793,6 +2793,51 @@ static const char* GetExceptionDescription(DWORD exceptionCode)
 	}
 }
 
+typedef const char* (CDECL *WINE_GET_VERSION)(void) ;
+typedef void (CDECL *WINE_GET_HOST_VERSION)(const char** sysname, const char** release) ;
+
+static void GetOsDescription( char* out, size_t len )
+{
+	HMODULE hNt = GetModudeHandleA("ntdll.dll");
+	if( hNt )
+	{
+		WINE_GET_VERSION fWineGetVersion = GetProcAddress(hNt,"wine_get_version") ;
+		if( fWineGetVersion )
+		{
+			WINE_GET_HOST_VERSION fWineGetHostInfo = GetProcAddress(hNt,"wine_get_host_version");
+			const char* host_sysname = NULL;
+			const char* host_release = NULL;
+			if( fWineGetHostInfo ) 
+			{
+				fWineGetHostInfo( &host_sysname, &host_release ) ;
+			}
+			if( host_sysname && host_release )
+			{
+				_snprintf_s( out, len, _TRUNCATE, "%s(Wine) - Host: %s %s", fWineGetVersion(), host_sysname, host_release );
+			}
+			else
+			{
+				_snprintf_s( out, len, _TRUNCATE, "%s(Wine) - Host: ?", fWineGetVersion() ) ;
+			}
+		}
+		else
+		{
+			// Get OS version information
+			OSVERSIONINFOEX osvi;
+			ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
+			osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
+			RtlGetVersion((LPOSVERSIONINFO)&osvi);
+			_snprintf_s( out, len, _TRUNCATE, "Native Windows %d.%d (Build %d)" 
+				osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber,
+			) ;
+		}
+	}
+	else
+	{
+		_snprintf_s( out, len, _TRUNCATE, "?? (No ntdll handle!?)" ) ;
+	}
+}
+
 static const char* GetOnlyFilename( const char* in )
 {
 	const char* ret = strrchr( in, '\\' ) ;
@@ -2825,10 +2870,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 
 	//retrieve OS information...
 	char szOsInfo[512] ;
-	{
-
-	}
-
+	GetOsDescription( szOsInfo, _countof(szOsInfo) ) ;
 
 	char szExeName[MAX_PATH] = "???" ;
 	GetModuleFileNameA( NULL, szExeName, MAX_PATH) ;
