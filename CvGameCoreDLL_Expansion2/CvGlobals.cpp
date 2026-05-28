@@ -2798,13 +2798,13 @@ typedef void (CDECL *WINE_GET_HOST_VERSION)(const char** sysname, const char** r
 
 static void GetOsDescription( char* out, size_t len )
 {
-	HMODULE hNt = GetModudeHandleA("ntdll.dll");
+	HMODULE hNt = GetModuleHandleA("ntdll.dll");
 	if( hNt )
 	{
-		WINE_GET_VERSION fWineGetVersion = GetProcAddress(hNt,"wine_get_version") ;
+		WINE_GET_VERSION fWineGetVersion = (WINE_GET_VERSION)GetProcAddress(hNt,"wine_get_version") ;
 		if( fWineGetVersion )
 		{
-			WINE_GET_HOST_VERSION fWineGetHostInfo = GetProcAddress(hNt,"wine_get_host_version");
+			WINE_GET_HOST_VERSION fWineGetHostInfo = (WINE_GET_HOST_VERSION)GetProcAddress(hNt,"wine_get_host_version");
 			const char* host_sysname = NULL;
 			const char* host_release = NULL;
 			if( fWineGetHostInfo ) 
@@ -2826,9 +2826,9 @@ static void GetOsDescription( char* out, size_t len )
 			OSVERSIONINFOEX osvi;
 			ZeroMemory(&osvi, sizeof(OSVERSIONINFOEX));
 			osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
-			RtlGetVersion((LPOSVERSIONINFO)&osvi);
-			_snprintf_s( out, len, _TRUNCATE, "Native Windows %d.%d (Build %d)" 
-				osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber,
+			GetVersionEx((LPOSVERSIONINFO)&osvi);
+			_snprintf_s( out, len, _TRUNCATE, "Native Windows %d.%d (Build %d)"
+				osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber
 			) ;
 		}
 	}
