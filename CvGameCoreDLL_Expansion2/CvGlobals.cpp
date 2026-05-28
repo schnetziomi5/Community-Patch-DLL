@@ -2801,7 +2801,7 @@ static const char* GetOnlyFilename( const char* in )
 
 LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 {
-	CreateDirectory(_T("crashlogs"));
+	CreateDirectory(_T("crashlogs"),NULL);
 #if defined(MOD_DEBUG_MINIDUMP)
 	CreateMiniDump(ExceptionInfo);
 #endif
@@ -2822,6 +2822,13 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 			exceptionAddressAdjusted = (DWORD)exceptionAddress - (DWORD)hModule ;
 		}
 	}
+
+	//retrieve OS information...
+	char szOsInfo[512] ;
+	{
+
+	}
+
 
 	char szExeName[MAX_PATH] = "???" ;
 	GetModuleFileNameA( NULL, szExeName, MAX_PATH) ;
@@ -2868,7 +2875,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	if (bFromDLL)
 	{
 		szBaseMsg = ""
-			"The game has crashed due to a code error. Please report the issue at https://github.com/LoneGazebo/Community-Patch-DLL/issues so it can be fixed.\n"
+			"The game has crashed due to a code error in the gamecore dll. Please report the issue at https://github.com/LoneGazebo/Community-Patch-DLL/issues so it can be fixed.\n"
 			"\n"
 			"Please provide the VP version number, the list of other mods in use, the minidump if one one was created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
 			"Minidumps and crashes.log are located in the folder 'crashlogs' in the civ5 installation directory\n"
@@ -2880,10 +2887,10 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		szBaseMsg = ""
 			"The game has crashed for an unknown reason. If you see this popup repeatedly please create a report at https://github.com/LoneGazebo/Community-Patch-DLL/issues.\n"
 			"\n"
-			"If you create a report, please provide the VP version number, the list of other mods in use, any minidumps created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
+			"When you create a report, please provide the VP version number, the list of other mods in use, any minidumps created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
 			"Minidumps and crashes.log are located in the folder 'crashlogs' in the civ5 installation directory\n"
 			"\n"
-			"Civ5 is a 32bit program. This limits the amount of memory available to the process and can potentially cause crashes. Common strategies to reduce memory consumption are:\n"
+			"Civ5 is a 32bit program. This limits the amount of memory available to the process. Memory exhaustion may cause crashes. Common strategies to reduce memory consumption are:\n"
 			"- Disable yield icons\n"
 			"- Reduce Leader Screen Quality to Minimum\n"
 			"- Avoid zooming out too far\n"
