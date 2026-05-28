@@ -2793,24 +2793,10 @@ static const char* GetExceptionDescription(DWORD exceptionCode)
 	}
 }
 
-static void findModuleInfo( void* address, char* ret_name, size_t ret_len, DWORD* ret_baseaddr )
+static const char* GetOnlyFilename( const char* in )
 {
-	HMODULE hModule= NULL;
-	if (GetModuleHandleExA(
-			GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
-			(LPCSTR)address, &hModule)
-	){
-		char szFullPath[MAX_PATH] = {};
-		if (GetModuleFileNameA(hModule, szFullPath, sizeof(szFullPath)))
-		{
-			const char* pFile = strrchr(szFullPath, '\\');
-			_snprintf_s(ret_name, ret_len, _TRUNCATE, "%s", pFile ? pFile + 1 : szFullPath);
-		}
-		if( ret_baseaddr != NULL )
-		{
-			*ret_baseaddr = (DWORD)hModule ;
-		}
-	}
+	const char* ret = strrchr( in, '\\' ) ;
+	return ret == NULL ? in : ( ret + 1 ) ;
 }
 
 LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
@@ -2826,40 +2812,49 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	char szCrashModule[MAX_PATH] = "???" ;
 	if( exceptionAddress != NULL )
 	{
-		findModuleInfo( exceptionAddress, szCrashModule, MAX_PATH, &exceptionAddressAdjusted ) ;
-		exceptionAddressAdjusted = (DWORD)exceptionAddress - exceptionAddressAdjusted ;
+		HMODULE hModule= NULL;
+		if (GetModuleHandleExA(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,(LPCSTR)exceptionAddress, &hModule))
+		{
+			if (!GetModuleFileNameA(hModule, szCrashModule, MAX_PATH))
+				_snprintf_s(szCrashModule, MAX_PATH, _TRUNCATE, "???") ;
+
+			exceptionAddressAdjusted = (DWORD)exceptionAddress - (DWORD)hModule ;
+		}
 	}
 
 	char szExeName[MAX_PATH] = "???" ;
-	findModuleInfo( NULL, szExeName, MAX_PATH, NULL ) ;
+	GetModuleFileNameA( NULL, szExeName, MAX_PATH) ;
 
 	char szCrashInfo[1024];
 	_snprintf_s(szCrashInfo, _countof(szCrashInfo), _TRUNCATE, 
 		"--Crash details--\n"
-		"exception: 0x%08x (%s)\n"
-		"location: %s+0x%08x\n"
-		"file loc: 0x%08x\n"
-		"dump: %s\n"
-		"os: %s\n"
-		"dll-version: %s\n"
-		"exe: %s\n",
+		"Exception: 0x%08x (%s)\n"
+		"Location (in file): %s+0x%08x\n"
+		"Location (live memory): 0x%08x+0x%08x\n"
+		"Minidump: %s\n"
+		"DLL-Version: %s\n"
+#ifdef VPDEBUG
+		"Configuration: DEBUG\n"
+#else
+		"Configuration: RELEASE\n"
+#endif
+		"Installation directory and .exe: %s\n",
 
 		exceptionCode, GetExceptionDescription(exceptionCode),
-		szCrashModule,exceptionAddressAdjusted,
-		exceptionAddressAdjusted-0xC00,
+		GetOnlyFilename(szCrashModule),exceptionAddressAdjusted-0xC00,
+		exceptionAddress,exceptionAddressAdjusted,
 #if defined(MOD_DEBUG_MINIDUMP)
-		((g_szLastMiniDumpPath[0] != '\0') ? g_szLastMiniDumpPath : "minidump creation failed?") ,
+		((g_szLastMiniDumpPath[0] != '\0') ? GetOnlyFilename(g_szLastMiniDumpPath) : "Minidump creation failed?") ,
 #else
-		"dll was built without minidump creation!",
+		"DLL was built without minidump support!",
 #endif
-		"??",//szOperatingSystemDescription,
 		CURRENT_GAMECORE_VERSION,
 		szExeName
 	);
 
 	// Show crash dialog to user
 	char szMessage[2048];
-	char* szBaseMsg ;
+	const char* szBaseMsg ;
 
 	bool bFromDLL = (_stricmp(szCrashModule, "CvGameCore_Expansion2.dll") == 0);
 	if (bFromDLL)
@@ -2875,7 +2870,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	else
 	{
 		szBaseMsg = ""
-			"The game has crashed for an unknown reason. If you see this popup repeatedly please create report at https://github.com/LoneGazebo/Community-Patch-DLL/issues.\n"
+			"The game has crashed for an unknown reason. If you see this popup repeatedly please create a report at https://github.com/LoneGazebo/Community-Patch-DLL/issues.\n"
 			"\n"
 			"If you create a report, please provide the VP version number, the list of other mods in use, any minidumps created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
 			"Minidumps and crashes.log are located in the folder 'crashlogs' in the civ5 installation directory\n"
