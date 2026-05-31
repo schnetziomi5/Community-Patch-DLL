@@ -2818,12 +2818,15 @@ static void GetOsDescription( char* out, size_t len )
 		else
 		{
 			// Get OS version information
+			/* This is useless because windows will spoof the version number..
 			OSVERSIONINFOEX osvi = {0};
 			osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFOEX);
 			GetVersionEx((LPOSVERSIONINFO)&osvi);
 			_snprintf_s( out, len, _TRUNCATE, "Native Windows %d.%d (Build %d)",
 				osvi.dwMajorVersion, osvi.dwMinorVersion, osvi.dwBuildNumber
 			) ;
+			*/
+			_snprintf_s(out,len,_TRUNCATE,"Windows");
 		}
 	}
 	else
@@ -2849,14 +2852,6 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	void* exceptionAddress = ExceptionInfo ? ExceptionInfo->ExceptionRecord->ExceptionAddress : NULL;
 	DWORD exceptionAddressAdjusted = (DWORD)exceptionAddress ;
 
-	TCHAR szTimestamp[64];
-	SYSTEMTIME st;
-	GetLocalTime(&st);
-	_stprintf_s(szTimestamp, sizeof(szTimestamp) / sizeof(TCHAR),
-		_T("%04d%02d%02d_%02d%02d%02d"),
-		st.wYear, st.wMonth, st.wDay,
-		st.wHour, st.wMinute, st.wSecond);
-
 	char szCrashModule[MAX_PATH] = "???" ;
 	if( exceptionAddress != NULL )
 	{
@@ -2870,11 +2865,17 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		}
 	}
 
+	//store time and date
+	char szTimestamp[64];
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	_snprintf_s(szTimestamp, sizeof(szTimestamp), _TRUNCATE, "%02d:%02d:%02d %02d/%02d/%04d", st.wHour, st.wMinute, st.wSecond, st.wDay, st.wMonth, st.wYear);
+
 	//retrieve OS information...
 	char szOsInfo[512] ;
 	GetOsDescription( szOsInfo, _countof(szOsInfo) ) ;
 
-	//memory statistics...
+	//acquire memory statistics...
 	byte* minAddress = 0;
 	byte* maxAddress = 0;
 	size_t maxMemory = 0;
@@ -2942,6 +2943,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		}
 	}
 
+	//full path of the exe file...
 	char szExeName[MAX_PATH] = "???" ;
 	GetModuleFileNameA( NULL, szExeName, MAX_PATH) ;
 
@@ -3017,10 +3019,10 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		szBaseMsg = ""
 			"The game has crashed for an unknown reason. If you see this popup repeatedly please create a report at https://github.com/LoneGazebo/Community-Patch-DLL/issues.\n"
 			"\n"
-			"When you create a report, please provide the VP version number, the list of other mods in use, any minidumps created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
+			"When creating a report, please provide the VP version number, the list of other mods in use, any minidumps created, crashes.log, and a screenshot of this message. If possible, attach a savegame from immediately before the crash.\n"
 			"Minidumps and crashes.log are located in the folder 'crashlogs' in the civ5 installation directory\n"
 			"\n"
-			"Civ5 is a 32bit program. This limits the amount of memory available to the process. Memory exhaustion may cause crashes. Common strategies to reduce memory consumption are:\n"
+			"Civ5 is a 32bit program. This puts a hard limit on the amount of memory the process can use independently of your hardware. Exhaustion of memory address space may cause crashes. Common strategies to reduce memory consumption are:\n"
 			"- Disable yield icons\n"
 			"- Reduce Leader Screen Quality to Minimum\n"
 			"- Avoid zooming out too far\n"
