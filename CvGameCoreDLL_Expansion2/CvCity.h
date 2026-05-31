@@ -82,7 +82,7 @@ public:
 		YIELD_UPDATE_GLOBAL //update yields and player happiness
 	};
 
-	void init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true, ReligionTypes eInitialReligion = NO_RELIGION, const char* szName = NULL, CvUnitEntry* pkSettlerUnitEntry = NULL);
+	void init(int iID, PlayerTypes eOwner, int iX, int iY, bool bBumpUnits = true, bool bInitialFounding = true, ReligionTypes eInitialReligion = NO_RELIGION, const char* szName = NULL, CvUnit* pkSettler = NULL);
 	void uninit();
 	void reset(int iID = 0, PlayerTypes eOwner = NO_PLAYER, int iX = 0, int iY = 0, bool bConstructorCall = false);
 	void setupGraphical();
@@ -478,8 +478,6 @@ public:
 	void SetReligiousPressureModifier(ReligionTypes eReligion, int iNewValue);
 	void ChangeReligiousPressureModifier(ReligionTypes eReligion, int iNewValue);
 
-	int GetCultureFromSpecialist(SpecialistTypes eSpecialist) const;
-
 	void UpdateOceanStatus();
 
 	const CvHandicapInfo& getHandicapInfo() const;
@@ -666,9 +664,6 @@ public:
 
 	int GetBorderGrowthRateIncreaseTotal(CvString* tooltipSink = NULL) const;
 
-	int GetBorderGrowthRateIncrease() const;
-	void ChangeBorderGrowthRateIncrease(int iChange);
-
 	int getPlotCultureCostModifier() const;
 	void changePlotCultureCostModifier(int iChange);
 
@@ -741,6 +736,7 @@ public:
 	void changeFreeExperience(int iChange);
 
 	bool CanAirlift() const;
+	bool CanSealift() const;
 
 	int GetMaxAirUnits() const;
 	void ChangeMaxAirUnits(int iChange);
@@ -971,6 +967,8 @@ public:
 
 	void ChangeNoStarvationNonSpecialist(int iValue);
 	bool IsNoStarvationNonSpecialist() const;
+	void ChangeMinimumFood(int iValue);
+	int GetMinimumFood() const;
 
 	int GetNumTimesOwned(PlayerTypes ePlayer) const;
 	void SetNumTimesOwned(PlayerTypes ePlayer, int iValue);
@@ -1757,6 +1755,10 @@ public:
 	void ChangePlagueTurns(int iValue); //Set in city::doturn
 	void SetPlagueTurns(int iValue);
 
+	int GetDefenseProcessTurns() const;
+	void ChangeDefenseProcessTurns(int iValue); //Set in city::doturn
+	void SetDefenseProcessTurns(int iValue);
+
 	int GetSappedTurns() const;
 	void SetSappedTurns(int iValue);
 	void ChangeSappedTurns(int iValue);
@@ -1867,7 +1869,6 @@ protected:
 	int m_iWonderProductionModifier;
 	int m_iCapturePlunderModifier;
 	int m_iDiplomatInfluenceBoost;
-	int m_iBorderGrowthRateIncrease;
 	int m_iPlotCultureCostModifier;
 	int m_iPlotBuyCostModifier;
 	int m_iCityWorkingChange;
@@ -2043,6 +2044,7 @@ protected:
 	int m_iExperienceFromPreviousGoldenAges;
 	bool m_bNoWarmonger;
 	int m_iNoStarvationNonSpecialist;
+	int m_iMinimumFood;
 	int m_iEmpireSizeModifierReduction;
 	int m_iDistressFlatReduction;
 	int m_iPovertyFlatReduction;
@@ -2171,6 +2173,7 @@ protected:
 	int m_iPlagueCounter;
 	int m_iPlagueTurns;
 	int m_iPlagueType;
+	int m_iDefenseProcessTurns;
 	int m_iSappedTurns;
 	int m_iBuildingProductionBlockedTurns;
 	int m_iNoTourismTurns;
@@ -2282,7 +2285,6 @@ SYNC_ARCHIVE_VAR(int, m_iNumNationalWonders)
 SYNC_ARCHIVE_VAR(int, m_iWonderProductionModifier)
 SYNC_ARCHIVE_VAR(int, m_iCapturePlunderModifier)
 SYNC_ARCHIVE_VAR(int, m_iDiplomatInfluenceBoost)
-SYNC_ARCHIVE_VAR(int, m_iBorderGrowthRateIncrease)
 SYNC_ARCHIVE_VAR(int, m_iPlotCultureCostModifier)
 SYNC_ARCHIVE_VAR(int, m_iPlotBuyCostModifier)
 SYNC_ARCHIVE_VAR(int, m_iCityWorkingChange)
@@ -2450,6 +2452,7 @@ SYNC_ARCHIVE_VAR(int, m_iExperiencePerGoldenAgeCap)
 SYNC_ARCHIVE_VAR(int, m_iExperienceFromPreviousGoldenAges)
 SYNC_ARCHIVE_VAR(bool, m_bNoWarmonger)
 SYNC_ARCHIVE_VAR(int, m_iNoStarvationNonSpecialist)
+SYNC_ARCHIVE_VAR(int, m_iMinimumFood)
 SYNC_ARCHIVE_VAR(int, m_iEmpireSizeModifierReduction)
 SYNC_ARCHIVE_VAR(int, m_iDistressFlatReduction)
 SYNC_ARCHIVE_VAR(int, m_iPovertyFlatReduction)
@@ -2559,6 +2562,7 @@ SYNC_ARCHIVE_VAR(int, m_iResistanceCounter)
 SYNC_ARCHIVE_VAR(int, m_iPlagueCounter)
 SYNC_ARCHIVE_VAR(int, m_iPlagueTurns)
 SYNC_ARCHIVE_VAR(int, m_iPlagueType)
+SYNC_ARCHIVE_VAR(int, m_iDefenseProcessTurns)
 SYNC_ARCHIVE_VAR(int, m_iSappedTurns)
 SYNC_ARCHIVE_VAR(int, m_iBuildingProductionBlockedTurns)
 SYNC_ARCHIVE_VAR(int, m_iNoTourismTurns)

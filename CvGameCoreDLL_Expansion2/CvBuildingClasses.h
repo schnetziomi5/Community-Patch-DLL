@@ -17,6 +17,7 @@
 struct AccomplishmentBonusInfo
 {
 	int iHappiness;
+	int ExtraSpies;
 	DomainTypes eDomainType;
 	int iDomainXP;
 	UnitCombatTypes eUnitCombatType;
@@ -146,6 +147,7 @@ public:
 	bool IsPuppetPurchaseOverride() const;
 	bool IsAllowsPuppetPurchase() const;
 	bool IsNoStarvationNonSpecialist() const;
+	int GetMinimumFood() const;
 	int GetCooldown() const;
 	bool IsTradeRouteInvulnerable() const;
 	int GetTRSpeedBoost() const;
@@ -194,6 +196,7 @@ public:
 	int GetGlobalMilitaryProductionModPerMajorWar() const;
 	int GetFoodKept() const;
 	bool IsAirlift() const;
+	bool IsSealift() const;
 	int GetAirModifier() const;
 	int GetAirModifierGlobal() const;
 	int GetNukeModifier() const;
@@ -208,8 +211,6 @@ public:
 	int GetCapturePlunderModifier() const;
 	int GetPolicyCostModifier() const;
 	int GetDiplomatInfluenceBoost() const;
-	int GetBorderGrowthRateIncrease() const;
-	int GetBorderGrowthRateIncreaseGlobal() const;
 	int GetGlobalPlotCultureCostModifier() const;
 	int GetPlotCultureCostModifier() const;
 	int GetGlobalPlotBuyCostModifier() const;
@@ -663,6 +664,7 @@ public:
 	std::map<int, std::map<int, int>> GetTechEnhancedYields() const;
 	const std::map<int, std::vector<AccomplishmentBonusInfo>>& GetBonusFromAccomplishments() const;
 	std::map<int, std::map<int, int>> GetYieldChangesFromAccomplishments() const;
+	std::map<int, std::map<int, int>> GetYieldModifiersFromAccomplishments() const;
 	std::map<pair<GreatPersonTypes, EraTypes>, int> GetGreatPersonPointFromConstruction() const;
 	int GetImprovementYieldChange(int i, int j) const;
 	int* GetImprovementYieldChangeArray(int i) const;
@@ -730,6 +732,7 @@ private:
 	bool m_bPuppetPurchaseOverride;
 	bool m_bAllowsPuppetPurchase;
 	bool m_bNoStarvationNonSpecialist;
+	int m_iMinimumFood;
 	int m_iGetCooldown;
 	bool m_bTradeRouteInvulnerable;
 	int m_iTRSpeedBoost;
@@ -778,6 +781,7 @@ private:
 	int m_iGlobalMilitaryProductionModPerMajorWar;
 	int m_iFoodKept;
 	bool m_bAirlift;
+	bool m_bSealift;
 	int m_iAirModifier;
 	int m_iAirModifierGlobal;
 	int m_iNukeModifier;
@@ -1119,6 +1123,7 @@ private:
 	std::map<int, std::map<int, int>> m_miTechEnhancedYields;
 	std::map<int, std::vector<AccomplishmentBonusInfo>> m_miBonusFromAccomplishments;
 	std::map<int, std::map<int, int>> m_miYieldChangesFromAccomplishments;
+	std::map<int, std::map<int, int>> m_miYieldModifiersFromAccomplishments;
 	std::map<pair<GreatPersonTypes, EraTypes>, int> m_miGreatPersonPointFromConstruction;
 	CvDoubleYieldInfo* m_paYieldFromYield;
 	CvDoubleYieldInfo* m_paYieldFromYieldGlobal;

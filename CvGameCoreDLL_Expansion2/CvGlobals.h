@@ -478,7 +478,9 @@ public:
 	//some caching to avoid iterating all building types
 	const std::vector <BuildingTypes>& getBuildingInteractions(BuildingTypes eRefBuilding) const;
 	const std::vector <BuildingTypes>& getBuildingsWithYieldsFromAccomplishments() const;
+	const std::vector <BuildingTypes>& getBuildingsWithModifiersFromAccomplishments() const;
 	const std::vector <BuildingTypes>& getBuildingsWithAirlift() const;
+	const std::vector <BuildingTypes>& getBuildingsWithSealift() const;
 
 	int getNumUnitClassInfos();
 	std::vector<CvUnitClassInfo*>& getUnitClassInfo();
@@ -2348,6 +2350,8 @@ public:
 	GD_INT_MEMBER(BARBARIAN_TECH_PERCENT);
 	GD_INT_MEMBER(CITY_RESOURCE_WLTKD_TURNS);
 	GD_INT_MEMBER(WLTKD_RESOURCE_RESET_TURNS); // VP
+	GD_INT_MEMBER(RESEARCH_AGREEMENT_PER_TURN_YIELD_PERCENT); // VP
+	GD_INT_MEMBER(RESEARCH_AGREEMENT_PLAYER_AVERAGE_YIELD_PERCENT); // VP
 	GD_INT_MEMBER(MAX_SPECIALISTS_FROM_BUILDING);
 	GD_INT_MEMBER(GREAT_PERSON_THRESHOLD_BASE);
 	GD_INT_MEMBER(GREAT_PERSON_THRESHOLD_INCREASE);
@@ -3139,7 +3143,9 @@ protected:
 	CvBuildingXMLEntries* m_pBuildings;
 	std::map<BuildingTypes, std::vector<BuildingTypes>> m_buildingInteractionLookup;
 	std::vector<BuildingTypes> m_vBuildingsWithYieldsFromAccomplishments;
+	std::vector<BuildingTypes> m_vBuildingsWithModifiersFromAccomplishments;
 	std::vector<BuildingTypes> m_vBuildingsWithAirlift;
+	std::vector<BuildingTypes> m_vBuildingsWithSealift;
 	CvUnitXMLEntries* m_pUnits;
 	CvProjectXMLEntries* m_pProjects;
 	CvPromotionXMLEntries* m_pPromotions;

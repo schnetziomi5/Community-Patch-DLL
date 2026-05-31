@@ -3723,11 +3723,6 @@ int CityStrategyAIHelpers::GetBuildingYieldValue(CvCity *pCity, BuildingTypes eB
 			{
 				iSpecialistYield = pkSpecialistInfo->getYieldChange(eYield);
 
-				if (eYield == YIELD_CULTURE)
-				{
-					iSpecialistYield += pkSpecialistInfo->getCulturePerTurn();
-				}
-
 				// Laborers don't get any non-specific specialist boosts
 				if (eSpecialist != GD_INT_GET(DEFAULT_SPECIALIST))
 					iSpecialistYield += kPlayer.getSpecialistExtraYield(eYield);
@@ -3949,7 +3944,7 @@ int CityStrategyAIHelpers::GetBuildingYieldValue(CvCity *pCity, BuildingTypes eB
 	}
 	if (pkBuildingInfo->GetYieldFromBorderGrowth(eYield) > 0)
 	{
-		iInstant += pkBuildingInfo->GetYieldFromBorderGrowth(eYield) + (pCity->getPlotCultureCostModifier() * -1) + (kPlayer.GetPlotCultureCostModifier() * -1) + pCity->GetBorderGrowthRateIncrease() + kPlayer.GetBorderGrowthRateIncreaseGlobal();
+		iInstant += pkBuildingInfo->GetYieldFromBorderGrowth(eYield) + (pCity->getPlotCultureCostModifier() * -1) + (kPlayer.GetPlotCultureCostModifier() * -1) + pCity->getYieldRateModifier(YIELD_CULTURE_LOCAL) + kPlayer.getYieldRateModifier(YIELD_CULTURE_LOCAL);
 	}
 	if (pkBuildingInfo->GetYieldFromPolicyUnlock(eYield) > 0)
 	{
@@ -4853,10 +4848,6 @@ int CityStrategyAIHelpers::GetBuildingPolicyValue(CvCity *pCity, BuildingTypes e
 		iValue += kPlayer.getWorkerSpeedModifier() + pkBuildingInfo->GetWorkerSpeedModifier();
 	}
 
-	if(pkBuildingInfo->GetBorderGrowthRateIncrease() > 0)
-	{
-		iValue += 2 * abs((kPlayer.GetBorderGrowthRateIncreaseGlobal() + pkBuildingInfo->GetBorderGrowthRateIncrease()));
-	}
 	if(pkBuildingInfo->GetPlotCultureCostModifier() < 0)
 	{
 		iValue += 2 * abs((kPlayer.GetPlotCultureCostModifier() + pkBuildingInfo->GetPlotCultureCostModifier()));
@@ -5213,13 +5204,24 @@ int CityStrategyAIHelpers::GetBuildingBasicValue(CvCity *pCity, BuildingTypes eB
 	{
 		iValue += pkBuildingInfo->GetFoodKept() * pCity->getPopulation();
 	}
-	if (pkBuildingInfo->IsNoStarvationNonSpecialist() && !pCity->IsNoStarvationNonSpecialist())
+	// NoStarvation is not as good as MinimumFood, but there is large overlap to consider
+	if (pkBuildingInfo->IsNoStarvationNonSpecialist() && !pCity->IsNoStarvationNonSpecialist() && pCity->GetMinimumFood() <= 0)
 	{
 		iValue += 10 * pCity->getPopulation();
 		if (pCity->getYieldRateTimes100(YIELD_FOOD) < 0)
 		{
 			// higher value if we are starving
 			iValue += (-2) * pCity->getYieldRateTimes100(YIELD_FOOD);
+		}
+	}
+	if (pkBuildingInfo->GetMinimumFood() > 0)
+	{
+		iValue += 10 * pCity->getPopulation();
+		int iNewTotalMinimum = pCity->GetMinimumFood() + pkBuildingInfo->GetMinimumFood();
+		if (pCity->getYieldRateTimes100(YIELD_FOOD) < iNewTotalMinimum)
+		{
+			int iAlreadyCannotStarve = pCity->IsNoStarvationNonSpecialist(); // heuristic: halve the value if already non-specialists dont count
+			iValue += (-2 + iAlreadyCannotStarve) * (pCity->getYieldRateTimes100(YIELD_FOOD) - iNewTotalMinimum);
 		}
 	}
 

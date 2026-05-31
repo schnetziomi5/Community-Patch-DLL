@@ -450,7 +450,7 @@ VALUES
 	('UNIT_SPAWN_NUM_CHOICES', 5), -- Number of top choices considered when spawning a random free unit. Also used for militaristic city states' unique unit choice.
 	('BLOCKADED_CITY_ATTACK_MODIFIER', 0), -- Attack bonus against blockaded cities
 	('GWAM_THRESHOLD_DECREASE', 0), -- Flat GPP cost reduction for GWAM
-	('HURRY_GOLD_BUILDING_COST_PERCENT', 60), -- How much % of production Cost determines cost of investment
+	('HURRY_GOLD_BUILDING_COST_PERCENT', 50), -- How much % of production Cost determines cost of investment
 	('BALANCE_BUILDING_INVESTMENT_BASELINE', -50), -- How much of total cost is provided by building investment
 	('BALANCE_UNIT_INVESTMENT_BASELINE', -50), -- How much of total cost is provided by unit investment
 	('BALANCE_PRODUCTION_DESERT_IMPROVEMENT', 0), -- Production yield change on featureless flat desert with improved resource
@@ -463,6 +463,9 @@ VALUES
 	('RELIGION_ADJACENT_CITY_DISTANCE', 9), -- Base trade route distance affected by religious pressure
 	('WOUNDED_DAMAGE_MULTIPLIER', 34), -- CP changed the wounded penalty from damage penalty to CS penalty. Adjust accordingly so it's actually 1% per 3HP lost.
 	('WLTKD_RESOURCE_RESET_TURNS', 0), -- WLTKD Reset Timer (<= 0 means disabled); scales with game speed
+	-- Research Agreements
+	('RESEARCH_AGREEMENT_PER_TURN_YIELD_PERCENT', 0), -- percentage of RA yields that are given as per-turn yields, not as instant yield when the agreement ends. Default 0 (in BNW / Community Patch)
+	('RESEARCH_AGREEMENT_PLAYER_AVERAGE_YIELD_PERCENT', 0), -- RA yields are calculated as X*avg(SciencePlayer1, SciencePlayer2) + (1-X)*min(SciencePlayer1, SciencePlayer2). Default 0 (in BNW / Community Patch) 
 -- These will be replaced by PostDefines in VP
 	('EMBASSY_IMPROVEMENT', -1),
 	('IDEOLOGY_PREREQ_ERA', -1),
@@ -932,21 +935,21 @@ VALUES
 	('ESPIONAGE_CONSECUTIVE_RIGGING_INFLUENCE_MODIFIER', 40),
 
 -- Calculation of Network Points (VP Espionage System)
-	('ESPIONAGE_NP_BASE', 30), -- Base Network Points generated per Turn
+	('ESPIONAGE_NP_BASE', 50), -- Base Network Points generated per Turn
 	('ESPIONAGE_NP_PER_SPY_RANK', 0), -- Additional Network Points per Spy Level
-	('ESPIONAGE_NP_CULTURAL_INFLUENCE', 10), -- Additional Network Points for Cultural Influence
-	('ESPIONAGE_NP_PER_TECHNOLOGY_BEHIND', 2), -- Additional Network Points per Technology the Spy Owner does not have
+	('ESPIONAGE_NP_CULTURAL_INFLUENCE', 15), -- Additional Network Points for Cultural Influence
+	('ESPIONAGE_NP_PER_TECHNOLOGY_BEHIND', 0), -- Additional Network Points per Technology the Spy Owner does not have
 	('ESPIONAGE_NP_MAX_NUM_TECH', 10), -- Max Number of Techs taken into account (see previous line)
 
 -- Security (VP Espionage System)
-	('ESPIONAGE_NP_REDUCTION_PER_SECURITY_POINT', 160), -- divided by 100: Percentage Reduction of Network Points per Security Point
-	('ESPIONAGE_MAX_NUM_SECURITY_POINTS', 50), -- Max Number of Security Points
-	('ESPIONAGE_SECURITY_BASE', 10), -- Base Security
-	('ESPIONAGE_SECURITY_NOT_ALL_HAVE_SPIES', 1000), -- Security if not all players have a Spy
-	('ESPIONAGE_SECURITY_PREVIOUS_CITY_MISSIONS', 2), -- Security for each previous Spy Mission completed in the City
+	('ESPIONAGE_NP_REDUCTION_PER_SECURITY_POINT', 100), -- divided by 100: Percentage Reduction of Network Points per Security Point
+	('ESPIONAGE_MAX_NUM_SECURITY_POINTS', 100), -- Max Number of Security Points
+	('ESPIONAGE_SECURITY_BASE', 20), -- Base Security
+	('ESPIONAGE_SECURITY_NOT_ALL_HAVE_SPIES', 0), -- Security if not all players have a Spy
+	('ESPIONAGE_SECURITY_PREVIOUS_CITY_MISSIONS', 0), -- Security for each previous Spy Mission completed in the City
 	('ESPIONAGE_SECURITY_PER_POPULATION', -2), -- Security per Population in City
 	('ESPIONAGE_SECURITY_PER_POPULATION_BUILDING_SCALER', 360), -- Adds +1 Security every time X reaches this value, where X = (total SpySecurityModifierPerXPop in city) * (city population)
-	('ESPIONAGE_SECURITY_PER_TRADE_ROUTE', -1), -- Security per Trade Route to/from City
+	('ESPIONAGE_SECURITY_PER_TRADE_ROUTE', -5), -- Security per Trade Route to/from City
 	('ESPIONAGE_SECURITY_PER_EXCESS_UNHAPPINESS', -4), -- Security per Excess Unhappiness in City
 
 -- Spy XP (VP Espionage System)
@@ -1001,8 +1004,8 @@ VALUES
 -- Unhappiness Need Modifiers (modify the median value)
 	('CAPITAL_NEED_MODIFIER', 25), -- +x% Needs in the capital. Offsets boost from Palace, helps make Capital a source of Unhappiness early on.
 	('TECH_NEED_MODIFIER_PERCENT_RESEARCHED', 0), -- Modifier to needs equal to % of techs researched, multiplied by this value and then divided by 100. Disabled by default.
-	('TECH_NEED_MODIFIER_PER_TECH_ABOVE_MEDIAN', 0), -- Modifier to needs for each tech ahead of the median # of techs researched you are. Disabled by default. 100 = 1%.
-	('TECH_NEED_MODIFIER_PER_TECH_BELOW_MEDIAN', 0), -- Modifier to needs for each tech behind the median # of techs researched you are. Disabled by default. -100 = -1%.
+	('TECH_NEED_MODIFIER_PER_TECH_ABOVE_MEDIAN', 100), -- Modifier to needs for each tech ahead of the median # of techs researched you are. Disabled by default. 100 = 1%.
+	('TECH_NEED_MODIFIER_PER_TECH_BELOW_MEDIAN', -200), -- Modifier to needs for each tech behind the median # of techs researched you are. Disabled by default. -100 = -1%.
 	('CITY_SIZE_NEED_MODIFIER', 0), -- Modifier to needs per citizen in the city. Disabled by default. -100 = -1%.
 	('EMPIRE_SIZE_NEED_MODIFIER_CITIES', 500), -- Modifier to needs per non-puppet city in the empire, excluding the capital. Scales with map size. Default is 500 (+5%). Does not support negative values.
 	('EMPIRE_SIZE_NEED_MODIFIER_POP', 125), --  Modifier to needs per citizen in the empire, excluding those in puppet cities. Scales with map size. Default is 125 (+1% per 8 citizens). Does not support negative values.
