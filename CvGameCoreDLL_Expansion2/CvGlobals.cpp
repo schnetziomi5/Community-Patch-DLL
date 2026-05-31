@@ -31,7 +31,6 @@
 #include "CvReplayInfo.h"
 #include "CvTypes.h"
 #include "FCrc32.h"
-#include "psapi.h"
 
 #include "CvDllDatabaseUtility.h"
 #include "CvDllScriptSystemUtility.h"
@@ -2850,6 +2849,14 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	void* exceptionAddress = ExceptionInfo ? ExceptionInfo->ExceptionRecord->ExceptionAddress : NULL;
 	DWORD exceptionAddressAdjusted = (DWORD)exceptionAddress ;
 
+	TCHAR szTimestamp[64];
+	SYSTEMTIME st;
+	GetLocalTime(&st);
+	_stprintf_s(szTimestamp, sizeof(szTimestamp) / sizeof(TCHAR),
+		_T("%04d%02d%02d_%02d%02d%02d"),
+		st.wYear, st.wMonth, st.wDay,
+		st.wHour, st.wMinute, st.wSecond);
+
 	char szCrashModule[MAX_PATH] = "???" ;
 	if( exceptionAddress != NULL )
 	{
@@ -2867,23 +2874,95 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	char szOsInfo[512] ;
 	GetOsDescription( szOsInfo, _countof(szOsInfo) ) ;
 
-	//retrieve memory usage
-	PROCESS_MEMORY_COUNTERS pmcMemInfo = {0} ;
-	GetProcessMemoryInfo( GetCurrentProcess(), &pmcMemInfo, sizeof(pmcMemInfo) ) ;
+	//memory statistics...
+	byte* minAddress = 0;
+	byte* maxAddress = 0;
+	size_t maxMemory = 0;
+
+	size_t committedMemoryLow = 0;
+	size_t reservedMemoryLow = 0;
+	size_t freeMemoryLow = 0;
+
+	size_t committedMemory = 0;
+	size_t freeMemory = 0;
+	size_t reservedMemory = 0;
+
+	byte* largestFreeBlockLowBase = 0;
+	size_t largestFreeBlockLowSize = 0;
+	byte* largestFreeBlockBase = 0;
+	size_t largestFreeBlockSize = 0;
+
+	{
+		SYSTEM_INFO si;
+		GetSystemInfo(&si);
+
+		minAddress = (byte*)si.lpMinimumApplicationAddress;
+		maxAddress = (byte*)si.lpMaximumApplicationAddress;
+
+		maxMemory = maxAddress - minAddress + 1;
+
+		byte* currentAddress = minAddress;
+
+		while (currentAddress < maxAddress)
+		{
+			MEMORY_BASIC_INFORMATION mInfo = { 0 };
+			VirtualQuery(currentAddress, &mInfo, sizeof(mInfo));
+
+			bool below2GB = currentAddress < (byte*)0x80000000;
+			if (below2GB && currentAddress + mInfo.RegionSize >= (byte*)0x80000000)
+				mInfo.RegionSize = (byte*)0x80000000 - currentAddress;
+			size_t adjSize = below2GB ? mInfo.RegionSize : 0;
+
+			if (mInfo.State == MEM_COMMIT)
+			{
+				committedMemory += mInfo.RegionSize;
+				committedMemoryLow += adjSize;
+			}
+			else if (mInfo.State == MEM_RESERVE)
+			{
+				reservedMemory += mInfo.RegionSize;
+				reservedMemoryLow += adjSize;
+			}
+			else
+			{
+				freeMemory += mInfo.RegionSize;
+				freeMemoryLow += adjSize;
+				if (largestFreeBlockSize < mInfo.RegionSize)
+				{
+					largestFreeBlockBase = (byte*)mInfo.BaseAddress;
+					largestFreeBlockSize = mInfo.RegionSize;
+				}
+				if (largestFreeBlockLowSize < adjSize)
+				{
+					largestFreeBlockLowBase = (byte*)mInfo.BaseAddress;
+					largestFreeBlockLowSize = adjSize;
+				}
+			}
+			currentAddress += mInfo.RegionSize;
+		}
+	}
 
 	char szExeName[MAX_PATH] = "???" ;
 	GetModuleFileNameA( NULL, szExeName, MAX_PATH) ;
 
-	char szCrashInfo[1024];
+	char szCrashInfo[2048];
 	_snprintf_s(szCrashInfo, _countof(szCrashInfo), _TRUNCATE, 
 		"--Crash details--\n"
 		"Exception: 0x%08x (%s)\n"
 		"Location (in file): %s+0x%08x\n"
 		"Location (live memory): 0x%08x+0x%08x\n"
+		"Time: %s\n"
 		"Minidump: %s\n"
 		"OS Info: %s\n"
-		"Memory usage: %d\n"
-		"Memory peak: %d\n"
+		"Memory markers\n"
+		"minAddress / maxAddress / maxMemory(k)\n"
+		"0x%p / 0x%p / %u\n"
+		"committed(k) / reserved(k) / free(k)\n"
+		"Sub2G: %u / %u / %u\n"
+		"Total: %u / %u / %u\n"
+		"Largest free block: base / size(k)\n"
+		"Sub2G: 0x%p / %u\n"
+		"Total: 0x%p / %u\n"
 		"DLL-Version: %s\n"
 #ifdef VPDEBUG
 		"Configuration: DEBUG\n"
@@ -2895,14 +2974,18 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 		exceptionCode, GetExceptionDescription(exceptionCode),
 		GetOnlyFilename(szCrashModule),exceptionAddressAdjusted-0xC00,
 		exceptionAddress,exceptionAddressAdjusted,
+		szTimestamp,
 #if defined(MOD_DEBUG_MINIDUMP)
 		((g_szLastMiniDumpPath[0] != '\0') ? GetOnlyFilename(g_szLastMiniDumpPath) : "Minidump creation failed?") ,
 #else
 		"DLL was built without minidump support!",
 #endif
 		szOsInfo,
-		pmcMemInfo.WorkingSetSize,
-		pmcMemInfo.PeakWorkingSetSize,
+		minAddress, maxAddress, maxMemory>>10,
+		committedMemoryLow >> 10, reservedMemoryLow >> 10, freeMemoryLow >> 10,
+		committedMemory >> 10, reservedMemory >> 10, freeMemory >> 10,
+		largestFreeBlockLowBase, largestFreeBlockLowSize >> 10,
+		largestFreeBlockBase, largestFreeBlockSize >> 10,
 		CURRENT_GAMECORE_VERSION,
 		szExeName
 	);
@@ -2915,7 +2998,7 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	}
 
 	// Show crash dialog to user
-	char szMessage[2048];
+	char szMessage[4096];
 	const char* szBaseMsg ;
 
 	bool bFromDLL = (_stricmp(szCrashModule, "CvGameCore_Expansion2.dll") == 0);
