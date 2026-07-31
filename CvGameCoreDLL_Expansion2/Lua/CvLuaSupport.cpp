@@ -53,7 +53,7 @@ int helperfunc(lua_State* L)
 {
 	{
 		const char* function = lua_tostring(L, lua_upvalueindex(2));
-		STTR(L,function);
+		STTR_2(L,function);
 		lua_pushvalue(L, lua_upvalueindex(1));
 		lua_insert(L, 1);
 		if( lua_pcall(L, lua_gettop(L)-1, LUA_MULTRET,0) == 0 )
@@ -83,7 +83,6 @@ int l__protect(lua_State* L)
 
 int l__call(lua_State* L)
 {
-	STTR_1(L);
 	lua_call(1,lua_gettop()-1,LUA_MULTRET);
 	return lua_gettop();
 }
