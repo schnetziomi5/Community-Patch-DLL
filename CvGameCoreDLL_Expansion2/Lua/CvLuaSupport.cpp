@@ -48,9 +48,82 @@ bool luaL_optbool(lua_State* L, int idx, bool bdefault)
 	}
 }
 
+
+int helperfunc(lua_State* L)
+{
+	{
+		const char* function = lua_tostring(L, lua_upvalueindex(2));
+		STTR(L,function);
+		lua_pushvalue(L, lua_upvalueindex(1));
+		lua_insert(L, 1);
+		if( lua_pcall(L, lua_gettop(L)-1, LUA_MULTRET,0) == 0 )
+			return lua_gettop(L);
+	}
+	lua_error(L);
+}
+
+void LuaSupport::PushClosureProtected(lua_State* L, lua_CFunction func, const char* name)
+{
+	lua_pushcclosure(L, func, 0);
+	lua_pushstring(L, name);
+	lua_pushcclosure(L, helperfunc, 2);
+}
+
+int l__threadid(lua_State* L)
+{
+	lua_pushinteger(L, GetCurrentThreadId());
+	return 1;
+}
+
+int l__protect(lua_State* L)
+{
+	lua_pushcclosure(L, helperfunc, 2);
+	return 1;
+}
+
+int l__call(lua_State* L)
+{
+	STTR_1(L);
+	lua_call(1,lua_gettop()-1,LUA_MULTRET);
+	return lua_gettop();
+}
+
+int l__sttr(lua_State* L)
+{
+	int i = 1 ;
+	lua_newtable(L);
+	STTR::STSTRUCT* mmm = (STTR::STSTRUCT*)TlsGetValue(STTR::TLS_IDX);
+	int lvl = 0;
+	while (mmm)
+	{
+		STTR::FDETAILS* et = mmm->info();
+		lua_pushfstring(L, "[%d] %s\n", lvl,et->func_name);
+		lua_rawseti(L, 1, i++)
+		for (int i = 0; i < et->num_args; i++)
+		{
+			const type_info* type = et->getArgType(i);
+			if (type->operator==(typeid(const char*)))
+				lua_pushfstring(L, "\t%s\t%s\t%s\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->str);
+			else
+				lua_pushfstring(L, "\t%s\t%s\t%p\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->ptr);
+			lua_rawseti(L, 1, i++);
+		}
+		lvl++;
+		mmm = mmm->prev();
+	}
+	return 1;
+}
+
+#define Method(func) LuaSupport::PushClosureProtected(L, l##func, #func); lua_setglobal(L, #func);
+
 //------------------------------------------------------------------------------
 void LuaSupport::RegisterScriptData(lua_State* L)
 {
+	Method(__threadid);
+	Method(__protect);
+	Method(__call);
+	Method(__sttr);
+
 	//Register some plain datatables
 	CvLuaEnums::Register(L);
 	CvLuaGameInfo::Register(L);

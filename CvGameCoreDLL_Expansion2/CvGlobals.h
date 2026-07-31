@@ -2833,5 +2833,94 @@ inline const Database::Connection* CvGlobals::GetGameDatabase() const
 
 //cannot use GC.getGame().getActivePlayer() in observer mode
 PlayerTypes GetCurrentPlayer();
+#ifdef _MSC_VER
+#define __PRETTY_FUNCTION__ __FUNCSIG__
+#endif
+
+#ifdef WIN32
+namespace STTR {
+
+	DWORD TLS_IDX = TLS_OUT_OF_INDEXES;
+
+	union RDWORD {
+		UINT32 dw;
+		float fl;
+		int si;
+		bool b;
+		char* str;
+		void* ptr;
+	};
+
+	template<typename T>
+	DWORD toraw(T in)
+	{
+		static_assert(sizeof(T) <= 4, "To big!");
+		DWORD dest(0);
+		memcpy(&dest, &in, sizeof(T));
+		return dest;
+	}
+
+	static_assert(sizeof(RDWORD) == 4,"");
+
+	struct FDETAILS {
+		const char* func_name;
+		void* printfunc_ovr;
+		void* recoveryfunc;
+		size_t num_args;
+		void* data[12];
+		const char* getArgName(size_t i) { return (const char*)data[2 * i]; }
+		const type_info* getArgType(size_t i) { return (const type_info*)data[2 * i + 1]; }
+	};
+
+	struct STSTRUCT {
+		DWORD* data;
+		~STSTRUCT() { TlsSetValue(TLS_IDX, (void*)data[0]); }
+		STSTRUCT* prev() { return (STSTRUCT*)data[0]; }
+		FDETAILS* info() { return (FDETAILS*)data[1]; }
+		DWORD arg(size_t idx) { return data[2 + idx]; }
+		RDWORD* raw(size_t idx) { return (RDWORD*) & data[2 + idx]; }
+	};
+
+}
+
+#define STTR_REC_C( FUNCMSG,... ) static DWORD vpdllsttr_dptr = NULL; if(not vpdllsttr_dptr){ static DWORD temp[]{ (DWORD)FUNCMSG,NULL,NULL,__VA_ARGS__}; vpdllsttr_dptr = (DWORD)&temp;}
+#define STTR_REC( ... ) STTR_REC_C( __PRETTY_FUNCTION__, __VA_ARGS__ )
+#define STTR_DAT( ... ) DWORD vpdllsttr_dat[]{(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,__VA_ARGS__};STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj)
+#define STTR_VNT( a ) (DWORD)(#a),(DWORD)(&typeid(a))
+
+#define STTR_0() STTR_REC(0);STTR_DAT(0)
+#define STTR_1(a) STTR_REC(1,STTR_VNT(a));STTR_DAT(STTR::toraw(a))
+#define STTR_2(a,b) STTR_REC(2,STTR_VNT(a),STTR_VNT(b));STTR_DAT(STTR::toraw(a),STTR::toraw(b))
+#define STTR_3(a,b,c) STTR_REC(3,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c));STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c))
+#define STTR_4(a,b,c,d) STTR_REC(4,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c),STTR_VNT(d));STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c),STTR::toraw(d))
+
+#define STTR_INIT_TSL() STTR::TLS_IDX = TlsAlloc()
+#define STTR_RELEASE_TLS() TlsFree(STTR::TLS_IDX);STTR::TLS_IDX=TLS_OUT_OF_INDEXES
+
+#else
+#define STTR_0()
+#define STTR_1(a)
+#define STTR_2(a,b)
+#define STTR_3(a,b,c)
+#define STTR_4(a,b,c,d)
+
+#define STTR_INIT_TSL()
+#define STTR_RELEASE_TLS()
+#endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 #endif //CIV5_GLOBALS_H
