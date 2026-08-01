@@ -89,7 +89,7 @@ int l__call(lua_State* L)
 
 int l__sttr(lua_State* L)
 {
-	int i = 0 ;
+	int idx = 1 ;
 	lua_newtable(L);
 	STTR::STSTRUCT* mmm = (STTR::STSTRUCT*)TlsGetValue(STTR::TLS_IDX);
 	int lvl = 0;
@@ -97,7 +97,7 @@ int l__sttr(lua_State* L)
 	{
 		STTR::FDETAILS* et = mmm->info();
 		lua_pushfstring(L, "[%d] %s\n", lvl,et->func_name);
-		lua_rawseti(L, 1, i++);
+		lua_rawseti(L, 1, ++idx);
 		for (int i = 0; i < et->num_args; i++)
 		{
 			const type_info* type = et->getArgType(i);
@@ -105,7 +105,7 @@ int l__sttr(lua_State* L)
 				lua_pushfstring(L, "\t%s\t%s\t%s\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->str);
 			else
 				lua_pushfstring(L, "\t%s\t%s\t%p\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->ptr);
-			lua_rawseti(L, 1, i++);
+			lua_rawseti(L, 1, ++idx);
 		}
 		lvl++;
 		mmm = mmm->prev();
