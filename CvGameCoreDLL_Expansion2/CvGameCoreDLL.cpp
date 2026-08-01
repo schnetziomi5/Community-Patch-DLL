@@ -30,7 +30,7 @@ BOOL APIENTRY DllMain(HANDLE hModule,
 	{
 		// The DLL is being loaded into the virtual address space of the current process as a result of the process starting up
 		OutputDebugString("DLL_PROCESS_ATTACH\n");
-		STTR_INIT_TSL();
+		STTR_INIT_TLS();
 		FDebugHelper::GetInstance().LoadSymbols((HMODULE)hModule);
 		// set timer precision
 		MMRESULT iTimeSet = timeBeginPeriod(1);		// set timeGetTime and sleep resolution to 1 ms, otherwise it's 10-16ms

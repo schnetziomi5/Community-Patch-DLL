@@ -2896,7 +2896,7 @@ namespace STTR {
 #define STTR_3(a,b,c) STTR_REC(3,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c)); STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c))
 #define STTR_4(a,b,c,d) STTR_REC(4,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c),STTR_VNT(d)); STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c),STTR::toraw(d))
 
-#define STTR_INIT_TSL() STTR::TLS_IDX = TlsAlloc()
+#define STTR_INIT_TLS() STTR::TLS_IDX = TlsAlloc()
 #define STTR_RELEASE_TLS() TlsFree(STTR::TLS_IDX);STTR::TLS_IDX=TLS_OUT_OF_INDEXES
 #define STTR_PRINT_STACK(out,max) STTR::PrintStackInfo(out,max)
 
@@ -2908,7 +2908,7 @@ namespace STTR {
 #define STTR_3(a,b,c)
 #define STTR_4(a,b,c,d)
 
-#define STTR_INIT_TSL()
+#define STTR_INIT_TLS()
 #define STTR_RELEASE_TLS()
 #define STTR_PRINT_STACK(out,max) _snprintf_s(out,max,_TRUNCATE,"No stacktraces for this dll build!")
 

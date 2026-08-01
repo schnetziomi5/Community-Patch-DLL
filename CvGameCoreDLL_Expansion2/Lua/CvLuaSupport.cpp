@@ -123,6 +123,7 @@ int l__assert(lua_State* L)
 	bool tmp = false ;
 
 	CvAssertDlg( exp, file, 0, tmp, msg );
+	return 0;
 }
 
 int l__crash(lua_State* L)
