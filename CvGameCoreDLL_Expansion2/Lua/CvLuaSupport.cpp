@@ -300,7 +300,7 @@ void LuaSupport::InitLuaFramework()
 "	if reload or (not baseApi) then\n"
 "		newThreadCallback = nil ;\n"
 "		local ttenv = getThreadEnvByName('ToolTips') ;\n"
-"		baseApi = { quicktraceback = ttenv.quicktraceback, __vp = __vp } ;\n"
+"		baseApi = { quicktraceback = ttenv.quicktraceback; __vp = __vp } ;\n"
 "		coroutine.resume( loaderCoroutine , ttenv );\n"
 "	end\n"
 "	return baseApi;\n"
