@@ -2840,7 +2840,7 @@ PlayerTypes GetCurrentPlayer();
 #ifdef WIN32
 namespace STTR {
 
-	DWORD TLS_IDX = TLS_OUT_OF_INDEXES;
+	extern DWORD TLS_IDX ;
 
 	union RDWORD {
 		UINT32 dw;
@@ -2850,6 +2850,7 @@ namespace STTR {
 		char* str;
 		void* ptr;
 	};
+	static_assert(sizeof(RDWORD) == 4,"huh?");
 
 	template<typename T>
 	DWORD toraw(T in)
@@ -2860,7 +2861,6 @@ namespace STTR {
 		return dest;
 	}
 
-	static_assert(sizeof(RDWORD) == 4,"");
 
 	struct FDETAILS {
 		const char* func_name;
