@@ -89,7 +89,7 @@ int l__call(lua_State* L)
 
 int l__sttr(lua_State* L)
 {
-	int idx = 1 ;
+	int idx = 0 ;
 	lua_newtable(L);
 	STTR::STSTRUCT* mmm = (STTR::STSTRUCT*)TlsGetValue(STTR::TLS_IDX);
 	int lvl = 0;
