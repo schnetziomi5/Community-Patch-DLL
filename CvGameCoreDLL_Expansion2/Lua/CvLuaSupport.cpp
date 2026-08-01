@@ -55,8 +55,9 @@ int helperfunc(lua_State* L)
 		const char* func = lua_tostring(L, lua_upvalueindex(2));
 		//STTR_2(L,func);
 
+		
 		static DWORD vpdllsttr_dptr = 0; 
-		if(not vpdllsttr_dptr){ 
+		if(!vpdllsttr_dptr){ 
 			static DWORD temp[]{ 
 				(DWORD)__FUNCSIG__,
 				0,0,2,
@@ -75,6 +76,7 @@ int helperfunc(lua_State* L)
 		};
 		STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};
 		TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
+		
 		
 		lua_pushvalue(L, lua_upvalueindex(1));
 		lua_insert(L, 1);
