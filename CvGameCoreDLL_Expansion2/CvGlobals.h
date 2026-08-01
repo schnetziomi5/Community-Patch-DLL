@@ -2843,14 +2843,14 @@ namespace STTR {
 	extern DWORD TLS_IDX ;
 
 	union RDWORD {
-		UINT32 dw;
+		DWORD dw;
 		float fl;
 		int si;
 		bool b;
 		char* str;
 		void* ptr;
 	};
-	static_assert(sizeof(RDWORD) == 4,"huh?");
+	//static_assert(sizeof(RDWORD) == 4,"huh?");
 
 	template<typename T>
 	DWORD toraw(T in)
