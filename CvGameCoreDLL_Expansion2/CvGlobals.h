@@ -2833,8 +2833,8 @@ inline const Database::Connection* CvGlobals::GetGameDatabase() const
 
 //cannot use GC.getGame().getActivePlayer() in observer mode
 PlayerTypes GetCurrentPlayer();
-#ifdef _MSC_VER
-#define __PRETTY_FUNCTION__ __FUNCSIG__
+#ifndef _MSC_VER
+#define  __FUNCSIG__ __PRETTY_FUNCTION__
 #endif
 
 #ifdef WIN32
@@ -2884,7 +2884,7 @@ namespace STTR {
 }
 
 #define STTR_REC_C( FUNCMSG,... ) static DWORD vpdllsttr_dptr = 0; if(not vpdllsttr_dptr){ static DWORD temp[]{ (DWORD)FUNCMSG,0,0,__VA_ARGS__}; vpdllsttr_dptr = (DWORD)&temp;}
-#define STTR_REC( ... ) STTR_REC_C( __PRETTY_FUNCTION__, __VA_ARGS__ )
+#define STTR_REC( ... ) STTR_REC_C( __FUNCSIG__, __VA_ARGS__ )
 #define STTR_DAT( ... ) DWORD vpdllsttr_dat[]{(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,__VA_ARGS__};STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj)
 #define STTR_VNT( a ) (DWORD)(#a),(DWORD)(&typeid(a))
 

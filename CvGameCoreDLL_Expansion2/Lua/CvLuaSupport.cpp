@@ -52,8 +52,8 @@ bool luaL_optbool(lua_State* L, int idx, bool bdefault)
 int helperfunc(lua_State* L)
 {
 	{
-		const char* function = lua_tostring(L, lua_upvalueindex(2));
-		STTR_2(L,function);
+		const char* func = lua_tostring(L, lua_upvalueindex(2));
+		STTR_2(L,func);
 		lua_pushvalue(L, lua_upvalueindex(1));
 		lua_insert(L, 1);
 		if( lua_pcall(L, lua_gettop(L)-1, LUA_MULTRET,0) == 0 )
