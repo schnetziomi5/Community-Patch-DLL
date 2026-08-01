@@ -166,7 +166,7 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 	CvLuaLeague::PushTypeTable(L);
 }
 
-#define Method(func) LuaSupport::PushClosureProtected(L, l##func, #func); lua_setfield(L, -1, #func);
+#define Method(func) LuaSupport::PushClosureProtected(L, l##func, #func); lua_setfield(L, -2, #func);
 
 void LuaSupport::InitLuaFramework()
 {
