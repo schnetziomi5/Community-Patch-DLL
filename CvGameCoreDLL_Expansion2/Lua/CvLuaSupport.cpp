@@ -58,7 +58,7 @@ int helperfunc(lua_State* L)
 		
 		static DWORD vpdllsttr_dptr = 0; 
 		if(!vpdllsttr_dptr){ 
-			static DWORD temp[]{ 
+			static DWORD temp[8]{ 
 				(DWORD)__FUNCSIG__,
 				0,0,2,
 				(DWORD)("L"),
@@ -68,7 +68,7 @@ int helperfunc(lua_State* L)
 			}; 
 			vpdllsttr_dptr = (DWORD)&temp;
 		}
-		DWORD vpdllsttr_dat[]{
+		DWORD vpdllsttr_dat[4]{
 			(DWORD)TlsGetValue(STTR::TLS_IDX),
 			vpdllsttr_dptr,
 			STTR::toraw(L),
