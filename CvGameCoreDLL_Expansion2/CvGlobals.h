@@ -2855,7 +2855,7 @@ namespace STTR {
 	template<typename T>
 	DWORD toraw(T in)
 	{
-		static_assert(sizeof(T) <= 4, "To big!");
+		//static_assert(sizeof(T) <= 4, "To big!");
 		DWORD dest(0);
 		memcpy(&dest, &in, sizeof(T));
 		return dest;
@@ -2883,19 +2883,20 @@ namespace STTR {
 
 }
 
-/*
-#define STTR_REC_C( FUNCMSG,... ) static DWORD vpdllsttr_dptr = 0; if(not vpdllsttr_dptr){ static DWORD temp[]{ (DWORD)FUNCMSG,0,0,__VA_ARGS__}; vpdllsttr_dptr = (DWORD)&temp;}
+///*
+#define STTR_REC_C( FUNCMSG,... ) static DWORD vpdllsttr_dptr = 0; if(!vpdllsttr_dptr){ static DWORD temp[] = { (DWORD)FUNCMSG,0,0,__VA_ARGS__}; vpdllsttr_dptr = (DWORD)&temp;}
 #define STTR_REC( ... ) STTR_REC_C( __FUNCSIG__, __VA_ARGS__ )
-#define STTR_DAT( ... ) DWORD vpdllsttr_dat[]{(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,__VA_ARGS__};STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj)
+#define STTR_DAT( ... ) DWORD vpdllsttr_dat[] = {(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,__VA_ARGS__}; STTR::STSTRUCT vpdllsttr_obj = {vpdllsttr_dat}; TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj)
 #define STTR_VNT( a ) (DWORD)(#a),(DWORD)(&typeid(a))
 
-#define STTR_0() STTR_REC(0);STTR_DAT(0)
-#define STTR_1(a) STTR_REC(1,STTR_VNT(a));STTR_DAT(STTR::toraw(a))
-#define STTR_2(a,b) STTR_REC(2,STTR_VNT(a),STTR_VNT(b));STTR_DAT(STTR::toraw(a),STTR::toraw(b))
-#define STTR_3(a,b,c) STTR_REC(3,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c));STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c))
-#define STTR_4(a,b,c,d) STTR_REC(4,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c),STTR_VNT(d));STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c),STTR::toraw(d))
-*/
+#define STTR_0() STTR_REC(0); STTR_DAT(0)
+#define STTR_1(a) STTR_REC(1,STTR_VNT(a)); STTR_DAT(STTR::toraw(a))
+#define STTR_2(a,b) STTR_REC(2,STTR_VNT(a),STTR_VNT(b)); STTR_DAT(STTR::toraw(a),STTR::toraw(b))
+#define STTR_3(a,b,c) STTR_REC(3,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c)); STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c))
+#define STTR_4(a,b,c,d) STTR_REC(4,STTR_VNT(a),STTR_VNT(b),STTR_VNT(c),STTR_VNT(d)); STTR_DAT(STTR::toraw(a),STTR::toraw(b),STTR::toraw(c),STTR::toraw(d))
+//*/
 
+/*
 //PREEXPANDED MACROS BECAUSE MSVC90 IS TOO STUPID
 
 #define STTR_0() static DWORD vpdllsttr_dptr = 0; if(!vpdllsttr_dptr){ static DWORD temp[]{ (DWORD)__FUNCSIG__,0,0,0}; vpdllsttr_dptr = (DWORD)&temp;};DWORD vpdllsttr_dat[]{(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,0};STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
@@ -2903,7 +2904,7 @@ namespace STTR {
 #define STTR_2(a,b) static DWORD vpdllsttr_dptr = 0; if(!vpdllsttr_dptr){ static DWORD temp[]{ (DWORD)__FUNCSIG__,0,0,2,(DWORD)("a"),(DWORD)(&typeid(a)),(DWORD)("b"),(DWORD)(&typeid(b))}; vpdllsttr_dptr = (DWORD)&temp;};DWORD vpdllsttr_dat[]{(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,STTR::toraw(a),STTR::toraw(b)};STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
 #define STTR_3(a,b,c) static DWORD vpdllsttr_dptr = 0; if(!vpdllsttr_dptr){ static DWORD temp[]{ (DWORD)__FUNCSIG__,0,0,3,(DWORD)("a"),(DWORD)(&typeid(a)),(DWORD)("b"),(DWORD)(&typeid(b)),(DWORD)("c"),(DWORD)(&typeid(c))}; vpdllsttr_dptr = (DWORD)&temp;};DWORD vpdllsttr_dat[]{(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,STTR::toraw(a),STTR::toraw(b),STTR::toraw(c)};STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
 #define STTR_4(a,b,c,d) static DWORD vpdllsttr_dptr = 0; if(!vpdllsttr_dptr){ static DWORD temp[]{ (DWORD)__FUNCSIG__,0,0,4,(DWORD)("a"),(DWORD)(&typeid(a)),(DWORD)("b"),(DWORD)(&typeid(b)),(DWORD)("c"),(DWORD)(&typeid(c)),(DWORD)("d"),(DWORD)(&typeid(d))}; vpdllsttr_dptr = (DWORD)&temp;};DWORD vpdllsttr_dat[]{(DWORD)TlsGetValue(STTR::TLS_IDX),vpdllsttr_dptr,STTR::toraw(a),STTR::toraw(b),STTR::toraw(c),STTR::toraw(d)};STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
-
+*/
 
 #define STTR_INIT_TSL() STTR::TLS_IDX = TlsAlloc()
 #define STTR_RELEASE_TLS() TlsFree(STTR::TLS_IDX);STTR::TLS_IDX=TLS_OUT_OF_INDEXES

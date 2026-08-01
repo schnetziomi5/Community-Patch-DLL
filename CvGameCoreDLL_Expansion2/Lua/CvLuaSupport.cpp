@@ -53,9 +53,11 @@ int helperfunc(lua_State* L)
 {
 	{
 		const char* func = lua_tostring(L, lua_upvalueindex(2));
-		//STTR_2(L,func);
-
 		
+		STTR_2(L,func);
+
+		/*
+
 		static DWORD vpdllsttr_dptr = 0; 
 		if(!vpdllsttr_dptr){ 
 			static DWORD temp[] = { 
@@ -77,6 +79,7 @@ int helperfunc(lua_State* L)
 		STTR::STSTRUCT vpdllsttr_obj = {vpdllsttr_dat};
 		TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
 		
+		*/
 		
 		lua_pushvalue(L, lua_upvalueindex(1));
 		lua_insert(L, 1);
@@ -122,7 +125,7 @@ int l__sttr(lua_State* L)
 		STTR::FDETAILS* et = mmm->info();
 		lua_pushfstring(L, "[%d] %s\n", lvl,et->func_name);
 		lua_rawseti(L, 1, ++idx);
-		for (int i = 0; i < et->num_args; i++)
+		for (DWORD i = 0; i < et->num_args; i++)
 		{
 			const type_info* type = et->getArgType(i);
 			if (type->operator==(typeid(const char*)))
