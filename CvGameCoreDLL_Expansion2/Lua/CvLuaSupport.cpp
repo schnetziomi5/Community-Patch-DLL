@@ -114,7 +114,7 @@ int l__sttr(lua_State* L)
 	return 1;
 }
 
-int l_assert(lua_State* L)
+int l__assert(lua_State* L)
 {
 	const char* exp = luaL_checkstring(L,1);
 	const char* msg = luaL_checkstring(L,2);
@@ -184,7 +184,7 @@ void LuaSupport::InitLuaFramework()
 		Method(__assert);
 		Method(__crash);
 	}
-	lua_setfglobal(L,"__vp");
+	lua_setglobal(L,"__vp");
 
 	const char* luaCommand = ""
 
@@ -473,7 +473,7 @@ bool LuaSupport::CallHook(ICvEngineScriptSystem1* pkScriptSystem, const char* sz
 	if (MOD_API_DISABLE_LUA_HOOKS)
 		return false;
 
-	STTR_4(pkScriptSystem,szName,args);
+	STTR_3(pkScriptSystem,szName,args);
 
 	// Must release our lock so that if the main thread has the Lua lock and is waiting for the Game Core lock, we don't freeze
 	bool bHadLock = gDLL->HasGameCoreLock();

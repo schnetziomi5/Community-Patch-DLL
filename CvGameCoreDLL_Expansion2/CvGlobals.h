@@ -2881,6 +2881,8 @@ namespace STTR {
 		RDWORD* raw(size_t idx) { return (RDWORD*) & data[2 + idx]; }
 	};
 
+	size_t PrintStackInfo( char* out, size_t max );
+
 }
 
 #define STTR_REC_C( FUNCMSG,... ) static DWORD vpdllsttr_dptr = 0; if(!vpdllsttr_dptr){ static DWORD temp[] = { (DWORD)FUNCMSG,0,0,__VA_ARGS__}; vpdllsttr_dptr = (DWORD)&temp;}
@@ -2896,8 +2898,10 @@ namespace STTR {
 
 #define STTR_INIT_TSL() STTR::TLS_IDX = TlsAlloc()
 #define STTR_RELEASE_TLS() TlsFree(STTR::TLS_IDX);STTR::TLS_IDX=TLS_OUT_OF_INDEXES
+#define STTR_PRINT_STACK(out,max) STTR::PrintStackInfo(out,max)
 
 #else
+
 #define STTR_0()
 #define STTR_1(a)
 #define STTR_2(a,b)
@@ -2906,6 +2910,8 @@ namespace STTR {
 
 #define STTR_INIT_TSL()
 #define STTR_RELEASE_TLS()
+#define STTR_PRINT_STACK(out,max) _snprintf_s(out,max,_TRUNCATE,"No stacktraces for this dll build!")
+
 #endif
 
 

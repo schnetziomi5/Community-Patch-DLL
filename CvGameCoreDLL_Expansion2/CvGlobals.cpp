@@ -120,9 +120,6 @@ size_t STTR::PrintStackInfo( char* out, size_t max )
 	}
 	return written;
 }
-#define STTR_PRINT_STACK(out,max) STTR::PrintStackInfo(out,max)
-#else
-#define STTR_PRINT_STACK(out,max) _snprintf_s(out,max,_TRUNCATE,"No stacktraces for this dll build!")
 #endif
 
 //
