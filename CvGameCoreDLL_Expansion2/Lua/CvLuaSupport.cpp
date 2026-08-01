@@ -53,7 +53,29 @@ int helperfunc(lua_State* L)
 {
 	{
 		const char* func = lua_tostring(L, lua_upvalueindex(2));
-		STTR_2(L,func);
+		//STTR_2(L,func);
+
+		static DWORD vpdllsttr_dptr = 0; 
+		if(not vpdllsttr_dptr){ 
+			static DWORD temp[]{ 
+				(DWORD)__FUNCSIG__,
+				0,0,2,
+				(DWORD)("L"),
+				(DWORD)(&typeid(L)),
+				(DWORD)("func"),
+				(DWORD)(&typeid(func))
+			}; 
+			vpdllsttr_dptr = (DWORD)&temp;
+		}
+		DWORD vpdllsttr_dat[]{
+			(DWORD)TlsGetValue(STTR::TLS_IDX),
+			vpdllsttr_dptr,
+			STTR::toraw(L),
+			STTR::toraw(func)
+		};
+		STTR::STSTRUCT vpdllsttr_obj{vpdllsttr_dat};
+		TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
+		
 		lua_pushvalue(L, lua_upvalueindex(1));
 		lua_insert(L, 1);
 		if( lua_pcall(L, lua_gettop(L)-1, LUA_MULTRET,0) == 0 )
