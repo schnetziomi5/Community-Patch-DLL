@@ -53,33 +53,7 @@ int helperfunc(lua_State* L)
 {
 	{
 		const char* func = lua_tostring(L, lua_upvalueindex(2));
-		
-		STTR_2(L,func);
-
-		/*
-
-		static DWORD vpdllsttr_dptr = 0; 
-		if(!vpdllsttr_dptr){ 
-			static DWORD temp[] = { 
-				(DWORD)__FUNCSIG__,
-				0,0,2,
-				(DWORD)("L"),
-				(DWORD)(&typeid(L)),
-				(DWORD)("func"),
-				(DWORD)(&typeid(func))
-			}; 
-			vpdllsttr_dptr = (DWORD)&temp;
-		}
-		DWORD vpdllsttr_dat[] = {
-			(DWORD)TlsGetValue(STTR::TLS_IDX),
-			vpdllsttr_dptr,
-			STTR::toraw(L),
-			STTR::toraw(func)
-		};
-		STTR::STSTRUCT vpdllsttr_obj = {vpdllsttr_dat};
-		TlsSetValue(STTR::TLS_IDX,&vpdllsttr_obj);
-		
-		*/
+		STTR_1(func);
 		
 		lua_pushvalue(L, lua_upvalueindex(1));
 		lua_insert(L, 1);
@@ -140,16 +114,25 @@ int l__sttr(lua_State* L)
 	return 1;
 }
 
-#define Method(func) LuaSupport::PushClosureProtected(L, l##func, #func); lua_setglobal(L, #func);
+int l_assert(lua_State* L)
+{
+	const char* exp = luaL_checkstring(L,1);
+	const char* msg = luaL_checkstring(L,2);
+	const char* file = luaL_optstring(L,3,"?");
+	const int line = luaL_optint(L,4,0);
+	bool tmp = false ;
+
+	CvAssertDlg( exp, file, 0, tmp, msg );
+}
+
+int l__crash(lua_State* L)
+{
+	BUILTIN_TRAP();
+}
 
 //------------------------------------------------------------------------------
 void LuaSupport::RegisterScriptData(lua_State* L)
 {
-	Method(__threadid);
-	Method(__protect);
-	Method(__call);
-	Method(__sttr);
-
 	//Register some plain datatables
 	CvLuaEnums::Register(L);
 	CvLuaGameInfo::Register(L);
@@ -182,6 +165,8 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 	CvLuaLeague::PushTypeTable(L);
 }
 
+#define Method(func) LuaSupport::PushClosureProtected(L, l##func, #func); lua_setfield(L, -1, #func);
+
 void LuaSupport::InitLuaFramework()
 {
 	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
@@ -189,6 +174,17 @@ void LuaSupport::InitLuaFramework()
 
 	lua_pushvalue(L,LUA_REGISTRYINDEX);
 	lua_setglobal(L,"REGISTRY");
+
+	lua_newtable(L);
+	{
+		Method(__threadid);
+		Method(__protect);
+		Method(__call);
+		Method(__sttr);
+		Method(__assert);
+		Method(__crash);
+	}
+	lua_setfglobal(L,"__vp");
 
 	const char* luaCommand = ""
 
@@ -213,6 +209,7 @@ void LuaSupport::InitLuaFramework()
 "local setmetatable = setmetatable ;\n"
 "local type = type ;\n"
 "local _ENV = getfenv(0) ;\n"
+"local __vp = __vp ;\n"
 "\n"
 "Threads[coroutine.running()] = {} ; -- Prevent my global env from being cleared out by the engine!\n"
 "\n"
@@ -302,7 +299,7 @@ void LuaSupport::InitLuaFramework()
 "	if reload or (not baseApi) then\n"
 "		newThreadCallback = nil ;\n"
 "		local ttenv = getThreadEnvByName('ToolTips') ;\n"
-"		baseApi = { quicktraceback = ttenv.quicktraceback } ;\n"
+"		baseApi = { quicktraceback = ttenv.quicktraceback, __vp = __vp } ;\n"
 "		coroutine.resume( loaderCoroutine , ttenv );\n"
 "	end\n"
 "	return baseApi;\n"
@@ -475,6 +472,8 @@ bool LuaSupport::CallHook(ICvEngineScriptSystem1* pkScriptSystem, const char* sz
 {
 	if (MOD_API_DISABLE_LUA_HOOKS)
 		return false;
+
+	STTR_4(pkScriptSystem,szName,args);
 
 	// Must release our lock so that if the main thread has the Lua lock and is waiting for the Game Core lock, we don't freeze
 	bool bHadLock = gDLL->HasGameCoreLock();
