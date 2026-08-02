@@ -48,6 +48,89 @@ bool luaL_optbool(lua_State* L, int idx, bool bdefault)
 	}
 }
 
+
+int helperfunc(lua_State* L)
+{
+	{
+		const char* func = lua_tostring(L, lua_upvalueindex(2));
+		STTR_1(func);
+		
+		lua_pushvalue(L, lua_upvalueindex(1));
+		lua_insert(L, 1);
+		if( lua_pcall(L, lua_gettop(L)-1, LUA_MULTRET,0) == 0 )
+			return lua_gettop(L);
+	}
+	lua_error(L);
+}
+
+void LuaSupport::PushClosureProtected(lua_State* L, lua_CFunction func, const char* name)
+{
+	lua_pushcclosure(L, func, 0);
+	lua_pushstring(L, name);
+	lua_pushcclosure(L, helperfunc, 2);
+}
+
+int l__threadid(lua_State* L)
+{
+	lua_pushinteger(L, GetCurrentThreadId());
+	return 1;
+}
+
+int l__protect(lua_State* L)
+{
+	lua_pushcclosure(L, helperfunc, 2);
+	return 1;
+}
+
+int l__call(lua_State* L)
+{
+	lua_call(L,lua_gettop(L)-1,LUA_MULTRET);
+	return lua_gettop(L);
+}
+
+int l__sttr(lua_State* L)
+{
+	int idx = 0 ;
+	lua_newtable(L);
+	STTR::STSTRUCT* mmm = (STTR::STSTRUCT*)TlsGetValue(STTR::TLS_IDX);
+	int lvl = 0;
+	while (mmm)
+	{
+		STTR::FDETAILS* et = mmm->info();
+		lua_pushfstring(L, "[%d] %s\n", lvl,et->func_name);
+		lua_rawseti(L, 1, ++idx);
+		for (DWORD i = 0; i < et->num_args; i++)
+		{
+			const type_info* type = et->getArgType(i);
+			if (type->operator==(typeid(const char*)))
+				lua_pushfstring(L, "\t%s\t%s\t%s\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->str);
+			else
+				lua_pushfstring(L, "\t%s\t%s\t%p\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->ptr);
+			lua_rawseti(L, 1, ++idx);
+		}
+		lvl++;
+		mmm = mmm->prev();
+	}
+	return 1;
+}
+
+int l__assert(lua_State* L)
+{
+	const char* exp = luaL_checkstring(L,1);
+	const char* msg = luaL_checkstring(L,2);
+	const char* file = luaL_optstring(L,3,"?");
+	const int line = luaL_optint(L,4,0);
+	bool tmp = false ;
+
+	CvAssertDlg( exp, file, 0, tmp, msg );
+	return 0;
+}
+
+int l__crash(lua_State* L)
+{
+	BUILTIN_TRAP();
+}
+
 //------------------------------------------------------------------------------
 void LuaSupport::RegisterScriptData(lua_State* L)
 {
@@ -83,6 +166,8 @@ void LuaSupport::RegisterScriptData(lua_State* L)
 	CvLuaLeague::PushTypeTable(L);
 }
 
+#define Method(func) LuaSupport::PushClosureProtected(L, l##func, #func); lua_setfield(L, -2, #func);
+
 void LuaSupport::InitLuaFramework()
 {
 	ICvEngineScriptSystem1* pkScriptSystem = gDLL->GetScriptSystem();
@@ -90,6 +175,17 @@ void LuaSupport::InitLuaFramework()
 
 	lua_pushvalue(L,LUA_REGISTRYINDEX);
 	lua_setglobal(L,"REGISTRY");
+
+	lua_newtable(L);
+	{
+		Method(__threadid);
+		Method(__protect);
+		Method(__call);
+		Method(__sttr);
+		Method(__assert);
+		Method(__crash);
+	}
+	lua_setglobal(L,"__vp");
 
 	const char* luaCommand = ""
 
@@ -114,6 +210,7 @@ void LuaSupport::InitLuaFramework()
 "local setmetatable = setmetatable ;\n"
 "local type = type ;\n"
 "local _ENV = getfenv(0) ;\n"
+"local __vp = __vp ;\n"
 "\n"
 "Threads[coroutine.running()] = {} ; -- Prevent my global env from being cleared out by the engine!\n"
 "\n"
@@ -203,7 +300,7 @@ void LuaSupport::InitLuaFramework()
 "	if reload or (not baseApi) then\n"
 "		newThreadCallback = nil ;\n"
 "		local ttenv = getThreadEnvByName('ToolTips') ;\n"
-"		baseApi = { quicktraceback = ttenv.quicktraceback } ;\n"
+"		baseApi = { quicktraceback = ttenv.quicktraceback; __vp = __vp } ;\n"
 "		coroutine.resume( loaderCoroutine , ttenv );\n"
 "	end\n"
 "	return baseApi;\n"
@@ -376,6 +473,8 @@ bool LuaSupport::CallHook(ICvEngineScriptSystem1* pkScriptSystem, const char* sz
 {
 	if (MOD_API_DISABLE_LUA_HOOKS)
 		return false;
+
+	STTR_3(pkScriptSystem,szName,args);
 
 	// Must release our lock so that if the main thread has the Lua lock and is waiting for the Game Core lock, we don't freeze
 	bool bHadLock = gDLL->HasGameCoreLock();

@@ -35,6 +35,8 @@ class ICvEngineScriptSystemArgs1;
 namespace LuaSupport
 {
 
+//! Helper function to register closures
+void PushClosureProtected( lua_State* L, lua_CFunction func, const char* name );
 //!	Called to register all game script data into Lua.
 void RegisterScriptData(lua_State* L);
 //! Setup hooks into the script system

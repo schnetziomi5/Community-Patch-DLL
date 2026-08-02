@@ -81,6 +81,47 @@ uint FStringHash(LPCSTR pszStr)
 
 CvGlobals gGlobals;
 
+#ifdef WIN32
+DWORD STTR::TLS_IDX;
+
+size_t STTR::PrintStackInfo( char* out, size_t max )
+{
+	size_t last_op = 0 ;
+	size_t written = 0 ;
+	STTR::STSTRUCT* mmm = (STTR::STSTRUCT*)TlsGetValue(STTR::TLS_IDX);
+	if(!mmm)
+		return _snprintf_s(out,max,_TRUNCATE,"Nothing recorded.\n");
+	int lvl = 0;
+	while (mmm)
+	{
+		STTR::FDETAILS* et = mmm->info();
+
+		last_op = _snprintf_s(out+written,max-written,_TRUNCATE,"[%i] %s\n",lvl,et->func_name);
+		if(last_op == -1)
+			return max ;
+		else
+			written += last_op ;
+
+		for (DWORD i = 0; i < et->num_args; i++)
+		{
+			const type_info* type = et->getArgType(i);
+			if (type->operator==(typeid(const char*)))
+				last_op = _snprintf_s(out+written, max-written, _TRUNCATE, "\t%s\t%s\t%s\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->str);
+			else
+				last_op = _snprintf_s(out+written, max-written, _TRUNCATE, "\t%s\t%s\t%p\n", et->getArgType(i)->name(), et->getArgName(i), mmm->raw(i)->ptr);
+			
+			if( last_op == -1 )
+				return max;
+			else
+				written += last_op ;
+		}
+		lvl++;
+		mmm = mmm->prev();
+	}
+	return written;
+}
+#endif
+
 //
 // CONSTRUCTOR
 //
@@ -2187,6 +2228,12 @@ void CreateMiniDump(EXCEPTION_POINTERS* pep)
 		return;
 	}
 
+	if(GetFileAttributesA("crashlogs\\nodumps.please")!=INVALID_FILE_ATTRIBUTES)
+	{
+		_snprintf_s(g_szLastMiniDumpPath,MAX_PATH,_TRUNCATE,"---");
+		return;
+	}
+
 	// Initialize debug symbols
 	HANDLE hProcess = GetCurrentProcess();
 	if (g_pfnSymInitialize)
@@ -2561,12 +2608,16 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 	char szExeName[MAX_PATH] = "???" ;
 	GetModuleFileNameA( NULL, szExeName, MAX_PATH) ;
 
-	char szCrashInfo[2048];
+	char szStacktrace[2048];
+	STTR_PRINT_STACK(szStacktrace,2048);
+
+	char szCrashInfo[4096];
 	_snprintf_s(szCrashInfo, _countof(szCrashInfo), _TRUNCATE, 
 		"--Crash details--\n"
 		"Exception: 0x%08x (%s)\n"
 		"Location (in file): %s+0x%08x\n"
-		"Location (live memory): 0x%08x+0x%08x\n"
+//		"Location (live memory): 0x%08x+0x%08x\n"
+		"-- Stacktrace: --\n%s\n----\n"
 		"Time: %s\n"
 		"Minidump: %s\n"
 		"OS Info: %s\n"
@@ -2589,7 +2640,8 @@ LONG WINAPI CustomFilter(EXCEPTION_POINTERS* ExceptionInfo)
 
 		exceptionCode, GetExceptionDescription(exceptionCode),
 		GetOnlyFilename(szCrashModule),exceptionAddressAdjusted-0xC00,
-		exceptionAddress,exceptionAddressAdjusted,
+//		exceptionAddress,exceptionAddressAdjusted,
+		szStacktrace,
 		szTimestamp,
 #if defined(MOD_DEBUG_MINIDUMP)
 		((g_szLastMiniDumpPath[0] != '\0') ? GetOnlyFilename(g_szLastMiniDumpPath) : "Minidump creation failed?") ,
