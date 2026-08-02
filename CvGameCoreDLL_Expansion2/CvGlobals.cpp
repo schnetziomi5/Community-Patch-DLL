@@ -2187,6 +2187,12 @@ void CreateMiniDump(EXCEPTION_POINTERS* pep)
 		return;
 	}
 
+	if(GetFileAttributesA("crashlogs\\nodumps.please")!=INVALID_FILE_ATTRIBUTES)
+	{
+		_snprintf_s(g_szLastMiniDumpPath,MAX_PATH,_TRUNCATE,"---");
+		return;
+	}
+
 	// Initialize debug symbols
 	HANDLE hProcess = GetCurrentProcess();
 	if (g_pfnSymInitialize)
