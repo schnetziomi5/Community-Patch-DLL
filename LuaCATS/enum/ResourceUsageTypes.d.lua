@@ -1,9 +1,0 @@
---- @meta
-
---- @enum ResourceUsageType
-ResourceUsageTypes = {
-	RESOURCEUSAGE_BONUS = 0,
-	RESOURCEUSAGE_STRATEGIC = 1,
-	RESOURCEUSAGE_LUXURY = 2,
-	NUM_RESOURCEUSAGE_TYPES = 3,
-}

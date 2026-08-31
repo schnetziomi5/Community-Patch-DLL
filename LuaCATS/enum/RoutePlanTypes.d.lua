@@ -1,9 +1,0 @@
---- @meta
-
---- @enum RoutePlanType
-RoutePlanTypes = {
-	NO_PLANNED_ROUTE = -1,
-	ROAD_PLANNING_EXCLUDE = 0,
-	ROAD_PLANNING_INCLUDE = 1,
-	ROAD_PLANNING_PRIORITY_CONSTRUCTION = 2,
-}
