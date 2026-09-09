@@ -15,9 +15,9 @@
 #include "LintFree.h"
 
 //------------------------------------------------------------------------------
-extern "C" ICvGameContext1* DllGetGameContext()
+extern "C" void* DllGetGameContext()
 {
-	return CvDllGameContext::GetSingleton();
+	return AdjustDllContextPointer(CvDllGameContext::GetSingleton());
 }
 //------------------------------------------------------------------------------
 BOOL APIENTRY DllMain(HANDLE hModule,
