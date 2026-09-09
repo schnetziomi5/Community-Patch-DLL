@@ -178,3 +178,8 @@ public:
 
 	virtual WorldSizeTypes DLLCALL GetWorldSizeType() const = 0;
 };
+
+// This is meant to provide a callback into code defined in the included headers.
+// If we ever want to move on from the msvc90/c++03 ABI this is the entrypoint to adjust the returned pointer before it reaches the engine.
+// But ideally (during a potential transition/testing phase) the code in the .cpp files in CvGameCoreDLL_Expansion2 should stay ignorant about the set of headers it builds against.
+inline void* AdjustDllContextPointer( ICvGameContext3* ptr ) { return (ICvGameContext1*)ptr ; }

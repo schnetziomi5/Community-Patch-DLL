@@ -26,7 +26,7 @@
 #define		FINPUTDEVICE_H
 #pragma		once
 
-#include "FSTLBlockAllocatorMT.h"
+//#include "FSTLBlockAllocatorMT.h"
 
 class FInputDevice
 {
@@ -45,6 +45,7 @@ public:
 	};
 
 
+	/*
 	// holds the value of an input event
 	struct InputValue
 	{
@@ -99,7 +100,7 @@ public:
 	void ClearHotKeyMappings();
 	uint TranslateHotKey(uint inputFromType) const;					// Call to use hot key mappings, return inputType
 protected:
-	typedef std::map<uint /*InputType*/, uint /*InputType*/,
+	typedef std::map<uint InputType, uint InputType,
 		std::less<uint>, FSTL_Tagged_Allocator<std::pair<uint, uint>, 16,c_eMPoolTypeContainer> > HotKeyMap;	// map of inputs to inputs (internal use only)
 
 	virtual bool IInit() = 0;			// device specific init
@@ -110,6 +111,7 @@ protected:
 	bool m_bInitted;
 	bool m_bEnabled;
 	uint m_ulFlags;
+	*/
 };
 
 #endif	//FINPUTDEVICE_H

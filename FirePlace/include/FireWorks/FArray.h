@@ -16,12 +16,13 @@
 #define		FARRAY_H
 #pragma		once
 
-#include "FSTLBlockAllocatorMT.h"
+//#include "FSTLBlockAllocatorMT.h"
 
 //===========================================================================
 
 namespace Firaxis
 {
+	/*
 	//////////////////////////////////////////////////////////////////////////
 	// Basic dynamic array - must be sized specifically!
 	//////////////////////////////////////////////////////////////////////////
@@ -128,19 +129,20 @@ namespace Firaxis
 		T* m_pData;
 		unsigned int m_nX, m_nY;
 	};
+	*/
 
 	//////////////////////////////////////////////////////////////////////////
-    // Static (fixed-size) array
+	// Static (fixed-size) array
 	//////////////////////////////////////////////////////////////////////////
-    template < class T, uint ARRAY_SIZE >
-    class Array
-    {
+	template < class T, uint ARRAY_SIZE >
+	class Array
+	{
 		typedef Array< T, ARRAY_SIZE > THIS_TYPE;
-    public:
-	    // Operators:
-	    //----------
-	    const T& operator []( uint i ) const
-	    {
+	public:
+		// Operators:
+		//----------
+		const T& operator []( uint i ) const
+		{
 #		ifdef _MSC_VER
 #			pragma warning ( push )
 #			pragma warning ( disable : 6385 ) //  Invalid data: accessing 'm_akItems' the readable size is X but X+N bytes might be read
@@ -209,12 +211,13 @@ namespace Firaxis
 			return (void*)&m_akItems[0];
 		}
 
-    private:
+	private:
 
-	    // Members:
+		// Members:
 		T m_akItems[ ARRAY_SIZE ];	// The array of items
-    };
+	};
 
+	/*
 	//////////////////////////////////////////////////////////////////////////
 	// Basic Static 2D array
 	//////////////////////////////////////////////////////////////////////////
@@ -225,10 +228,13 @@ namespace Firaxis
 		T m_Data[X][Y];
 		unsigned int m_X,m_Y;
 	};
+	*/
 };
 
 
 //===========================================================================
+
+/*
 
 // Dynamic Array that extends std::vector
 template < class T, eMPoolType pool_type >
@@ -384,5 +390,7 @@ inline void FArray<T,pool_type>::Sort( Predicate pred )
 {
 	std::sort( FArray<T,pool_type>::begin(), FArray<T, pool_type>::end(), pred );
 }
+
+*/
 
 #endif	//FARRAY_H
