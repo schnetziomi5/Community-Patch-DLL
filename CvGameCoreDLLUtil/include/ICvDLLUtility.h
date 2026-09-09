@@ -202,7 +202,7 @@ public:
 	// Schnetziomi5 9.9.2026:
 	// Unused in the dll but the only reference to FFastList
 	//typedef FFastList<char*, c_eMPoolTypeGame, 0> EnumeratedFilesList;
-	//typedef void* EnumeratedFilesList;
+	typedef void* EnumeratedFilesList;
 	virtual void EnumerateFiles(EnumeratedFilesList& files, 
 								const char* szFolder, const size_t lenFolder, 
 								const char* szPattern, const size_t lenPattern, 
