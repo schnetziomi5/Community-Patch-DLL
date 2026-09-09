@@ -5,11 +5,7 @@
 
 #include <vector>
 #include <algorithm>
-#include "EventSystem/FastDelegate.h"
 #include "CvRandom.h"
-
-// Functor for random number callback routine
-typedef fastdelegate::FastDelegate2<int, const char*, int> RandomNumberDelegate;
 
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 //  CLASS:     CvWeightedVector

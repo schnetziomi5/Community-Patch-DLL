@@ -1141,7 +1141,7 @@ bool operator>=( LPCWSTR s1, const FStringW& s2 );
 
 // Helper types
 typedef FString* 				  FStringPtr;
-typedef FArray< FStringPtr, c_eMPoolTypeFString > FStringPtrArray;
+//typedef FArray< FStringPtr, c_eMPoolTypeFString > FStringPtrArray;
 
 // Global data
 extern const FString g_strEMPTY;	// A global empty string

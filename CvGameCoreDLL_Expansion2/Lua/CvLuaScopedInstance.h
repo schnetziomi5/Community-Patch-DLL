@@ -10,17 +10,12 @@
 #ifndef CVLUASCOPEDNSTANCE_H
 
 #include "CvLuaMethodWrapper.h"
-#include "FObjectHandle.h"
 
 template<class Derived, class InstanceType>
 class CvLuaScopedInstance : public CvLuaMethodWrapper<Derived, InstanceType>
 {
 public:
 	static void Push(lua_State* L, InstanceType* pkType);
-	static void Push(lua_State* L, FObjectHandle<InstanceType> handle)
-	{
-		Push(L, handle.pointer());
-	}
 	static InstanceType* GetInstance(lua_State* L, int idx = 1, bool bErrorOnFail = true);
 
 	static void PushTypeTable(lua_State* L);

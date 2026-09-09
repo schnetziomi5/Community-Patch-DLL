@@ -249,6 +249,4 @@ typedef wchar_t          wchar;
 #include "CvCorporationClasses.h"
 #include "CvContractClasses.h"
 
-using namespace fastdelegate;
-
 #endif	// CVGAMECOREDLLPCH_H

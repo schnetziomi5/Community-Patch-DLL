@@ -153,6 +153,7 @@ public:
 		NUM_INPUT_TYPE
 		};
 
+	/*
 	FKBInputDevice() {}
 	~FKBInputDevice() {}
 
@@ -170,6 +171,7 @@ public:
 	bool IsScrollLockDown() const { return IsKeyDown(KB_SCROLL); }
 	bool IsNumLockDown() const { return IsKeyDown(KB_NUMLOCK); }
 	bool IsCapsLockDown() const { return IsKeyDown(KB_CAPSLOCK); }
+	*/
 };
 
 #endif	//FKBINPUTDEVICE
