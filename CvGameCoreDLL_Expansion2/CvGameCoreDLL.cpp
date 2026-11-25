@@ -23,7 +23,7 @@ extern "C" ICvGameContext1* DllGetGameContext()
 //------------------------------------------------------------------------------
 BOOL APIENTRY DllMain(HANDLE hModule,
                       DWORD  ul_reason_for_call,
-                      LPVOID lpReserved)
+                      LPVOID)
 {
 	switch(ul_reason_for_call)
 	{
@@ -48,7 +48,7 @@ BOOL APIENTRY DllMain(HANDLE hModule,
 	case DLL_PROCESS_DETACH:
 		OutputDebugString("DLL_PROCESS_DETACH\n");
 		timeEndPeriod(1);
-		LuaSupport::NotifyDllUnload(lpReserved != NULL); // non-NULL: the process is exiting
+		LuaSupport::NotifyDllUnload();
 		CvDllGameContext::DestroySingleton();
 		GC.setDLLIFace(NULL);
 		break;

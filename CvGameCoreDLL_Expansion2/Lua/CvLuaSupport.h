@@ -18,9 +18,7 @@ typedef void(*lua_CVoidFunc)(lua_State*);
 namespace LuaSupport {
 	
 	void NotifyDatabaseCached();
-	void NotifyDllUnload(bool bProcessExit);
-	// For every metatable whose __gc is DLL code (the metatable at idx)
-	void TrackDllFinalizer(lua_State* L, int idx);
+	void NotifyDllUnload();
 	
 	// Can be used to invoke lua functions without actually including lua headers
 	void LuaPCall(lua_State* L,lua_CFunction f);

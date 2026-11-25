@@ -59,7 +59,6 @@ public:
 		lua_pushstring(L,"__gc");
 		lua_pushcclosure_unsafe(L,&LuaTaggedAutoPointer::finalizer);
 		lua_rawset(L,1);
-		LuaSupport::TrackDllFinalizer(L,1);
 		
 		return 1;
 	}
