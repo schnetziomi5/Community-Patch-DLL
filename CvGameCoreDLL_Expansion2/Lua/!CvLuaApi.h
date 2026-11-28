@@ -3,6 +3,7 @@
 #define INCLUDED_CVLUAAPI
 
 #include "lua.hpp"
+#include "!CvScriptingUID.h"
 
 typedef void(*lua_CVoidFunc)(lua_State*);
 typedef unsigned long DWORD;
@@ -19,8 +20,8 @@ int luaVp_pcall(lua_State* L,lua_CVoidFunc f);
 void luaVp_pushcclosure(lua_State* L, lua_CFunction f, int orig_upvals = 0, lua_CVoidFunc lPushDbgInfo = NULL , const char* hint = NULL);
 #define lua_pushcclosure luaVp_pushcclosure //Redirect everything to use our version (protected wrapper)
 
-void* luaVp_pushCreateObject(lua_State* L, DWORD typeTag, void* instptr, size_t size );
-void* luaVp_tryPushObject(lua_State* L, DWORD typeTag, void* instptr);
+void* luaVp_pushCreateUIDObject(lua_State* L, size_t size, uid_index_t index, uid_ttag_t type_tag = 0 );
+void* luaVp_tryPushUIDObject(lua_State* L, uid_index_t index );
 
 void luaVp_registerMetatable(lua_State* L, DWORD typeTag, lua_CFunction pushMtt, const char* hint = NULL);
 void luaVp_applyMetatable(lua_State* L, int idx, DWORD typeTag);

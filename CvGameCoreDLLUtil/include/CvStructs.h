@@ -244,8 +244,10 @@ struct UnitMoveRate
 //Created to stop deleted(=killed) Units and Cities from crashing the game if pointers linger in lua
 //Could also be used at other places if desired. 
 
+/*
 struct AutoInvalidatedPointerBase {
-	void destroy() { prev->next=next; next->prev=prev; construct(); }
+	virtual void destroyCallback() {}
+	void destroy() { prev->next=next; next->prev=prev; construct(); destroyCallback(); }
 	void construct() { obj=NULL; prev=this; next=this; }
 	void* get() { return obj; }
 	AutoInvalidatedPointerBase() { construct(); }
@@ -257,19 +259,22 @@ protected:
 	void* obj;
 	AutoInvalidatedPointerBase* prev;
 	AutoInvalidatedPointerBase* next;
+	void(*destructionCallback)(AutoInvalidatedPointerBase*);
 	void init_now( void* inst, AutoInvalidatedPointerBase* head ) { obj=inst; if(inst) { prev=head; next=head->next; head->next=this; next->prev=this; } }
 };
 
-template<class T>
 struct AutoInvalidatedPointer : AutoInvalidatedPointerBase {
-	AutoInvalidatedPointer(T* inst) { init_now(inst,&inst->m_PointerList); }
+	template<class T>
+	AutoInvalidatedPointer( T* inst ) { init_now(inst,&inst->m_PointerList); }
+	AutoInvalidatedPointer() {} ;
+	template<class T>
 	void construct( T* inst ) { init_now(inst,&inst->m_PointerList); }
-	T* get() { return (T*)obj; }
 };
 
-struct AutoInvalidatedPointerList : AutoInvalidatedPointerBase {
+struct AutoInvalidatedPointerList : protected AutoInvalidatedPointerBase {
 	AutoInvalidatedPointerList() {}
 	~AutoInvalidatedPointerList() { while(next!=this) { next->destroy(); } }
 };
+*/
 
 #endif

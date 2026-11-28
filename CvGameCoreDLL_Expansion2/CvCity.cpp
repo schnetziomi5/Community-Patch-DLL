@@ -527,7 +527,8 @@ CvCity::CvCity() :
 	, m_bConnectedToOcean()
 {
 	OBJECT_ALLOCATED
-		FSerialization::citiesToCheck.push_back(this);
+	
+	FSerialization::citiesToCheck.push_back(this);
 
 	reset(0, NO_PLAYER, 0, 0, true);
 
